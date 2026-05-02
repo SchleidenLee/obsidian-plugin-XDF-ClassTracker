@@ -1,6 +1,7 @@
 import OZCalendarPlugin from 'main';
 import { PluginSettingTab, App, Setting } from 'obsidian';
 import { FolderSuggest } from 'settings/suggestor';
+import { ScheduleData } from 'types';
 
 export type OpenFileBehaviourType = 'new-tab' | 'new-tab-group' | 'current-tab' | 'obsidian-default';
 export type SortingOption = 'name' | 'name-rev';
@@ -26,6 +27,7 @@ export interface OZCalendarPluginSettings {
 	newNoteCancelButtonReverse: boolean;
 	fileNameOverflowBehaviour: OverflowBehaviour;
 	showWeekNumbers: boolean;
+	scheduleData: ScheduleData;
 }
 
 export const DEFAULT_SETTINGS: OZCalendarPluginSettings = {
@@ -45,6 +47,7 @@ export const DEFAULT_SETTINGS: OZCalendarPluginSettings = {
 	newNoteCancelButtonReverse: false,
 	fileNameOverflowBehaviour: 'hide',
 	showWeekNumbers: false,
+	scheduleData: {},
 };
 
 export class OZCalendarPluginSettingsTab extends PluginSettingTab {
@@ -371,6 +374,32 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 						this.plugin.calendarForceUpdate();
 					});
+			});
+
+		containerEl.createEl('h2', { text: 'Schedule Settings' });
+
+		new Setting(containerEl)
+			.setName('Edit Schedule')
+			.setDesc('Open the schedule editor to mark rest days and overtime days')
+			.addButton((button) => {
+				button.setButtonText('Open Schedule Editor');
+				button.onClick(() => {
+					this.plugin.openScheduleModal();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName('Clear All Schedule Data')
+			.setDesc('Remove all schedule data (this action cannot be undone)')
+			.addButton((button) => {
+				button.setButtonText('Clear All');
+				button.setWarning();
+				button.onClick(() => {
+					this.plugin.settings.scheduleData = {};
+					this.plugin.saveSettings();
+					this.plugin.calendarForceUpdate();
+					this.display();
+				});
 			});
 	}
 }

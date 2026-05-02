@@ -6,6 +6,7 @@ import { DayChangeCommandAction, OZCalendarDaysMap, fileToOZItem } from 'types';
 import { OZCAL_ICON } from './util/icons';
 import { OZCalendarPluginSettings, DEFAULT_SETTINGS, OZCalendarPluginSettingsTab } from './settings/settings';
 import { CreateNoteModal } from 'modal';
+import { ScheduleModal } from './ScheduleModal';
 
 export default class OZCalendarPlugin extends Plugin {
 	settings: OZCalendarPluginSettings;
@@ -339,6 +340,11 @@ export default class OZCalendarPlugin extends Plugin {
 				this.app.workspace.revealLeaf(leafs[0]);
 			}
 		}
+	};
+
+	openScheduleModal = () => {
+		const modal = new ScheduleModal(this);
+		modal.open();
 	};
 
 	reloadPlugin = () => {

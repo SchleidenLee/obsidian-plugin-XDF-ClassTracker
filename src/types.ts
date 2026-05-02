@@ -21,6 +21,12 @@ export interface OZCalendarDaysMap {
 
 export type DayChangeCommandAction = 'next-day' | 'previous-day' | 'today';
 
+export type ScheduleDayType = 'rest' | 'overtime' | null;
+
+export interface ScheduleData {
+	[key: string]: ScheduleDayType;
+}
+
 export const fileToOZItem = (params: { note: TFile; time?: string }): OZItem => {
 	return {
 		type: 'note',

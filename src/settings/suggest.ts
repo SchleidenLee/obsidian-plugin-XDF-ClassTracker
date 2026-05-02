@@ -1,6 +1,8 @@
+declare const app: any;
+
 // Credits go to Liam's Periodic Notes Plugin: https://github.com/liamcain/obsidian-periodic-notes
 
-import { ISuggestOwner, Scope } from 'obsidian';
+import { ISuggestOwner, Scope, App } from 'obsidian';
 import { createPopper, Instance as PopperInstance } from '@popperjs/core';
 
 const wrapAround = (value: number, size: number): number => {

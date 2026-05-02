@@ -87,13 +87,22 @@ export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 	};
 
 	const customTileClass = ({ activeStartDate, date, view }: CalendarTileProperties) => {
-		// Assign a custom class in case the day is the current day
+		let classes: string[] = [];
 		let today = new Date();
-		return date.getFullYear() === today.getFullYear() &&
+		if (date.getFullYear() === today.getFullYear() &&
 			date.getMonth() === today.getMonth() &&
 			date.getDate() === today.getDate()
-			? 'oz-calendar-plugin-today'
-			: '';
+		) {
+			classes.push('oz-calendar-plugin-today');
+		}
+		const dateString = dayjs(date).format('YYYY-MM-DD');
+		const scheduleType = plugin.settings.scheduleData[dateString];
+		if (scheduleType === 'rest') {
+			classes.push('oz-calendar-schedule-rest');
+		} else if (scheduleType === 'overtime') {
+			classes.push('oz-calendar-schedule-overtime');
+		}
+		return classes.join(' ');
 	};
 
 	const fixedCalendarClass = plugin.settings.fixedCalendar ? 'fixed' : '';

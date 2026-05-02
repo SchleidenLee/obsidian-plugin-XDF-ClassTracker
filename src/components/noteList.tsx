@@ -66,9 +66,12 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 				(ozItem) => ozItem.type === 'note'
 			) as OZNote[];
 		}
+		// Sort by time (ascending - earliest first), fallback to name if no time
 		sortedList = sortedList.sort((a, b) => {
-			if (plugin.settings.sortingOption === 'name-rev')
-				[a.displayName, b.displayName] = [b.displayName, a.displayName];
+			if (a.time && b.time) {
+				return a.time.localeCompare(b.time);
+			}
+			// Fallback to name sorting if time is missing
 			return a.displayName.localeCompare(b.displayName, 'en', { numeric: true });
 		});
 		return sortedList;
@@ -141,8 +144,11 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 							key={ozNote.path}
 							onClick={(e) => openFilePath(e, ozNote.path)}
 							onContextMenu={(e) => triggerFileContextMenu(e, ozNote.path)}>
+							{ozNote.time && (
+								<span className="oz-calendar-note-time">{ozNote.time}</span>
+							)}
 							<HiOutlineDocumentText className="oz-calendar-note-line-icon" />
-							<span>{ozNote.displayName}</span>
+							<span className="oz-calendar-note-name">{ozNote.displayName}</span>
 						</div>
 					);
 				})}

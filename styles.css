@@ -319,3 +319,21 @@ settings:
 	overflow: hidden;
 	white-space: nowrap;
 }
+
+/* Time stamp display for notes */
+.oz-calendar-note-time {
+	display: inline-block;
+	font-size: 0.85em;
+	color: var(--text-muted);
+	margin-right: 6px;
+	padding: 2px 6px;
+	background-color: var(--background-secondary);
+	border-radius: 4px;
+	font-family: var(--font-monospace);
+	min-width: 45px;
+	text-align: center;
+}
+
+.oz-calendar-note-name {
+	vertical-align: middle;
+}

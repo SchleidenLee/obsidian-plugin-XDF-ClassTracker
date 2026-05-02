@@ -136,17 +136,35 @@ export default class OZCalendarPlugin extends Plugin {
 	/* ------------ HANDLE VAULT CHANGES - HELPERS ------------ */
 
 	/**
+	 * Extract time (HH:mm) from a date string using the configured date format
+	 * @param dateStr - The full date string from YAML
+	 * @returns Time in HH:mm format, or undefined if not parseable
+	 */
+	extractTimeFromDate = (dateStr: string): string | undefined => {
+		try {
+			const parsed = dayjs(dateStr, this.settings.dateFormat);
+			if (parsed.isValid()) {
+				return parsed.format('HH:mm');
+			}
+		} catch (e) {
+			// Ignore parsing errors
+		}
+		return undefined;
+	};
+
+	/**
 	 * Adds the provided filePath to the corresponding date within plugin state
 	 * @param date
 	 * @param filePath
+	 * @param time - Optional time string (HH:mm) from YAML
 	 */
-	addFilePathToState = (date: string, file: TFile) => {
+	addFilePathToState = (date: string, file: TFile, time?: string) => {
 		let newStateMap = this.OZCALENDARDAYS_STATE;
 		// if exists, add the new file path
 		if (date in newStateMap) {
-			newStateMap[date] = [...newStateMap[date], fileToOZItem({ note: file })];
+			newStateMap[date] = [...newStateMap[date], fileToOZItem({ note: file, time })];
 		} else {
-			newStateMap[date] = [fileToOZItem({ note: file })];
+			newStateMap[date] = [fileToOZItem({ note: file, time })];
 		}
 		this.OZCALENDARDAYS_STATE = newStateMap;
 	};
@@ -185,7 +203,8 @@ export default class OZCalendarPlugin extends Plugin {
 				if (k === this.settings.yamlKey) {
 					let fmValue = String(fm[k]);
 					let parsedDayISOString = dayjs(fmValue, this.settings.dateFormat).format('YYYY-MM-DD');
-					this.addFilePathToState(parsedDayISOString, file);
+					let time = this.extractTimeFromDate(fmValue);
+					this.addFilePathToState(parsedDayISOString, file, time);
 					changeFlag = true;
 				}
 			}
@@ -215,13 +234,14 @@ export default class OZCalendarPlugin extends Plugin {
 					if (k === this.settings.yamlKey) {
 						let fmValue = String(fm[k]);
 						let parsedDayISOString = dayjs(fmValue, this.settings.dateFormat).format('YYYY-MM-DD');
+						let time = this.extractTimeFromDate(fmValue);
 						// If date doesn't exist, create a new one
 						if (!(parsedDayISOString in this.OZCALENDARDAYS_STATE)) {
-							this.addFilePathToState(parsedDayISOString, file);
+							this.addFilePathToState(parsedDayISOString, file, time);
 						} else {
 							// if date exists and note is not in the date list
 							if (!(file.path in this.OZCALENDARDAYS_STATE[parsedDayISOString])) {
-								this.addFilePathToState(parsedDayISOString, file);
+								this.addFilePathToState(parsedDayISOString, file, time);
 							}
 						}
 					}
@@ -242,6 +262,17 @@ export default class OZCalendarPlugin extends Plugin {
 						if (this.settings.dateSource === 'yaml') {
 							ozItem.path = file.path;
 							ozItem.displayName = file.basename;
+							// Re-extract time from the file's YAML
+							let cache = this.app.metadataCache.getCache(file.path);
+							if (cache && cache.frontmatter) {
+								let fm = cache.frontmatter;
+								for (let fmKey of Object.keys(cache.frontmatter)) {
+									if (fmKey === this.settings.yamlKey) {
+										let fmValue = String(fm[fmKey]);
+										ozItem.time = this.extractTimeFromDate(fmValue);
+									}
+								}
+							}
 							changeFlag = true;
 						} else if (this.settings.dateSource === 'filename') {
 							this.OZCALENDARDAYS_STATE[k] = this.OZCALENDARDAYS_STATE[k].filter((ozItem) => {
@@ -323,7 +354,7 @@ export default class OZCalendarPlugin extends Plugin {
 		for (let mdFile of mdFiles) {
 			if (this.settings.dateSource === 'yaml') {
 				// Get the file Cache
-				let fileCache = app.metadataCache.getFileCache(mdFile);
+				let fileCache = this.app.metadataCache.getFileCache(mdFile);
 				// Check if there is Frontmatter
 				if (fileCache && fileCache.frontmatter) {
 					let fm = fileCache.frontmatter;
@@ -335,14 +366,16 @@ export default class OZCalendarPlugin extends Plugin {
 							let parsedDayJsDate = dayjs(fmValue, this.settings.dateFormat);
 							// Take only YYYY-MM-DD part fromt the date as String
 							let parsedDayISOString = parsedDayJsDate.format('YYYY-MM-DD');
+							// Extract time (HH:mm) from the full date
+							let time = parsedDayJsDate.format('HH:mm');
 							// Check if it already exists
 							if (parsedDayISOString in OZCalendarDays) {
 								OZCalendarDays[parsedDayISOString] = [
 									...OZCalendarDays[parsedDayISOString],
-									fileToOZItem({ note: mdFile }),
+									fileToOZItem({ note: mdFile, time }),
 								];
 							} else {
-								OZCalendarDays[parsedDayISOString] = [fileToOZItem({ note: mdFile })];
+								OZCalendarDays[parsedDayISOString] = [fileToOZItem({ note: mdFile, time })];
 							}
 						}
 					}

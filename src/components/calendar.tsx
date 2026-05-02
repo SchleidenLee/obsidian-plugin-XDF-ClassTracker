@@ -101,6 +101,7 @@ export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 	return (
 		<div className={'oz-calendar-plugin-view ' + fixedCalendarClass}>
 			<Calendar
+				locale="en-US"
 				onChange={setSelectedDay}
 				value={selectedDay}
 				maxDetail="month"

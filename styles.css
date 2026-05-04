@@ -110,7 +110,7 @@ settings:
 }
 
 .oz-calendar-plugin-view .react-calendar__month-view__days__day--weekend {
-	color: var(--oz-calendar-weekend-color);
+	/* weekend highlight disabled for flexible work schedule */
 }
 
 .oz-calendar-plugin-view .react-calendar__month-view__days__day--neighboringMonth {

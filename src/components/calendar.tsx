@@ -96,7 +96,7 @@ export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 			classes.push('oz-calendar-plugin-today');
 		}
 		const dateString = dayjs(date).format('YYYY-MM-DD');
-		const scheduleType = plugin.settings.scheduleData[dateString];
+		const scheduleType = plugin.scheduleData[dateString];
 		if (scheduleType === 'rest') {
 			classes.push('oz-calendar-schedule-rest');
 		} else if (scheduleType === 'overtime') {

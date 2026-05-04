@@ -1,7 +1,6 @@
 import OZCalendarPlugin from 'main';
 import { PluginSettingTab, App, Setting } from 'obsidian';
 import { FolderSuggest } from 'settings/suggestor';
-import { ScheduleData } from 'types';
 
 export type OpenFileBehaviourType = 'new-tab' | 'new-tab-group' | 'current-tab' | 'obsidian-default';
 export type SortingOption = 'name' | 'name-rev';
@@ -27,7 +26,6 @@ export interface OZCalendarPluginSettings {
 	newNoteCancelButtonReverse: boolean;
 	fileNameOverflowBehaviour: OverflowBehaviour;
 	showWeekNumbers: boolean;
-	scheduleData: ScheduleData;
 }
 
 export const DEFAULT_SETTINGS: OZCalendarPluginSettings = {
@@ -47,7 +45,6 @@ export const DEFAULT_SETTINGS: OZCalendarPluginSettings = {
 	newNoteCancelButtonReverse: false,
 	fileNameOverflowBehaviour: 'hide',
 	showWeekNumbers: false,
-	scheduleData: {},
 };
 
 export class OZCalendarPluginSettingsTab extends PluginSettingTab {
@@ -394,9 +391,9 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			.addButton((button) => {
 				button.setButtonText('Clear All');
 				button.setWarning();
-				button.onClick(() => {
-					this.plugin.settings.scheduleData = {};
-					this.plugin.saveSettings();
+				button.onClick(async () => {
+					this.plugin.scheduleData = {};
+					await this.plugin.saveScheduleData();
 					this.plugin.calendarForceUpdate();
 					this.display();
 				});

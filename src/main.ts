@@ -2,7 +2,7 @@ import { CachedMetadata, Menu, Plugin, TAbstractFile, TFile, addIcon } from 'obs
 import { OZCalendarView, VIEW_TYPE } from 'view';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { DayChangeCommandAction, OZCalendarDaysMap, fileToOZItem } from 'types';
+import { DayChangeCommandAction, OZCalendarDaysMap, fileToOZItem, ScheduleData } from 'types';
 import { OZCAL_ICON } from './util/icons';
 import { OZCalendarPluginSettings, DEFAULT_SETTINGS, OZCalendarPluginSettingsTab } from './settings/settings';
 import { CreateNoteModal } from 'modal';
@@ -12,6 +12,7 @@ export default class OZCalendarPlugin extends Plugin {
 	settings: OZCalendarPluginSettings;
 	dayjs = dayjs;
 	OZCALENDARDAYS_STATE: OZCalendarDaysMap = {};
+	scheduleData: ScheduleData = {};
 	initialScanCompleted: boolean = false;
 	EVENT_TYPES = {
 		forceUpdate: 'ozCalendarForceUpdate',
@@ -29,6 +30,9 @@ export default class OZCalendarPlugin extends Plugin {
 		// Load Settings
 		this.addSettingTab(new OZCalendarPluginSettingsTab(this.app, this));
 		await this.loadSettings();
+
+		// Load Schedule Data from Plugin Directory
+		await this.loadScheduleData();
 
 		this.registerView(VIEW_TYPE, (leaf) => {
 			return new OZCalendarView(leaf, this);
@@ -345,6 +349,37 @@ export default class OZCalendarPlugin extends Plugin {
 	openScheduleModal = () => {
 		const modal = new ScheduleModal(this);
 		modal.open();
+	};
+
+	getScheduleFilePath = () => {
+		const pluginsDir = this.manifest.dir;
+		return `${pluginsDir}/schedule.json`;
+	};
+
+	loadScheduleData = async () => {
+		try {
+			const schedulePath = this.getScheduleFilePath();
+			const exists = await this.app.vault.adapter.exists(schedulePath);
+			if (exists) {
+				const content = await this.app.vault.adapter.read(schedulePath);
+				const data = JSON.parse(content);
+				if (data && data.scheduleData) {
+					this.scheduleData = data.scheduleData;
+				}
+			}
+		} catch (e) {
+			console.warn('Failed to load schedule data:', e);
+		}
+	};
+
+	saveScheduleData = async () => {
+		try {
+			const schedulePath = this.getScheduleFilePath();
+			const content = JSON.stringify({ scheduleData: this.scheduleData }, null, 2);
+			await this.app.vault.adapter.write(schedulePath, content);
+		} catch (e) {
+			console.warn('Failed to save schedule data:', e);
+		}
 	};
 
 	reloadPlugin = () => {

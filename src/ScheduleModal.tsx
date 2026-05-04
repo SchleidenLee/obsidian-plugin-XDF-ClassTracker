@@ -68,7 +68,7 @@ export class ScheduleModal extends Modal {
 		for (let day = 1; day <= daysInMonth; day++) {
 			const currentDate = dayjs(this.activeStartDate).date(day);
 			const dateString = currentDate.format('YYYY-MM-DD');
-			const dayType = this.plugin.settings.scheduleData[dateString] || null;
+			const dayType = this.plugin.scheduleData[dateString] || null;
 			const isWeekend = currentDate.day() === 0 || currentDate.day() === 6;
 
 			const dayEl = calendarGrid.createDiv('oz-schedule-day');
@@ -91,9 +91,9 @@ export class ScheduleModal extends Modal {
 				labelEl.setText('加班');
 			}
 
-			dayEl.addEventListener('click', (e) => {
+			dayEl.addEventListener('click', async (e) => {
 				e.preventDefault();
-				const currentType = this.plugin.settings.scheduleData[dateString] || null;
+				const currentType = this.plugin.scheduleData[dateString] || null;
 				let newType: ScheduleDayType;
 
 				if (currentType === null) {
@@ -105,12 +105,12 @@ export class ScheduleModal extends Modal {
 				}
 
 				if (newType === null) {
-					delete this.plugin.settings.scheduleData[dateString];
+					delete this.plugin.scheduleData[dateString];
 				} else {
-					this.plugin.settings.scheduleData[dateString] = newType;
+					this.plugin.scheduleData[dateString] = newType;
 				}
 
-				this.plugin.saveSettings();
+				await this.plugin.saveScheduleData();
 				this.plugin.calendarForceUpdate();
 				this.renderCalendar(containerEl);
 			});

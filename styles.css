@@ -120,7 +120,7 @@ settings:
 
 .oz-calendar-plugin-view .react-calendar__tile {
 	max-width: 100%;
-	padding: 10px 6.6667px;
+	padding: 8px 2px;
 	background: none;
 	text-align: center;
 	line-height: 16px;
@@ -355,17 +355,21 @@ settings:
 	font-size: 8px;
 	display: flex;
 	justify-content: center;
-	gap: 2px;
+	gap: 1px;
 	min-height: 10px;
+	width: 90%;
+	margin-top: 4px;
 }
 
 .oz-slot-empty {
 	flex: 1;
+	min-width: 0;
 	height: 6px;
 }
 
 .oz-slot-filled {
 	flex: 1;
+	min-width: 0;
 	height: 6px;
 	border-radius: 1px;
 }

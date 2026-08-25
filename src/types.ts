@@ -5,6 +5,8 @@ export type OZNote = {
 	displayName: string;
 	path: string;
 	time?: string; // HH:mm format from YAML date field
+	needSendFeedback?: boolean;
+	feedbackTaskDone?: boolean;
 };
 
 export type OZReminder = {
@@ -27,11 +29,18 @@ export interface ScheduleData {
 	[key: string]: ScheduleDayType;
 }
 
-export const fileToOZItem = (params: { note: TFile; time?: string }): OZItem => {
+export const fileToOZItem = (params: {
+	note: TFile;
+	time?: string;
+	needSendFeedback?: boolean;
+	feedbackTaskDone?: boolean;
+}): OZItem => {
 	return {
 		type: 'note',
 		displayName: params.note.basename,
 		path: params.note.path,
 		time: params.time,
+		needSendFeedback: params.needSendFeedback,
+		feedbackTaskDone: params.feedbackTaskDone,
 	};
 };

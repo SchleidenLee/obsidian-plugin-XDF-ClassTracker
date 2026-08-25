@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Calendar, { CalendarTileProperties } from 'react-calendar';
-import { RxDotFilled } from 'react-icons/rx';
-import OZCalendarPlugin from '../main';
+import OZCalendarPlugin from 'main';
 import NoteListComponent from './noteList';
 import dayjs from 'dayjs';
 import useForceUpdate from 'hooks/forceUpdate';
@@ -69,17 +68,40 @@ export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 		setSelectedDay(newDate.toDate());
 	};
 
+	const timeSlots = plugin.settings.timeSlots;
+
 	const customTileContent = ({ date, view }: CalendarTileProperties) => {
 		if (view === 'month') {
 			const dateString = dayjs(date).format('YYYY-MM-DD');
-			let dotsCount =
-				dateString in plugin.OZCALENDARDAYS_STATE ? plugin.OZCALENDARDAYS_STATE[dateString].length : 0;
+			const items = dateString in plugin.OZCALENDARDAYS_STATE ? plugin.OZCALENDARDAYS_STATE[dateString] : [];
+
+			const slotMap: { [slot: string]: { hasClass: boolean; feedbackPending: boolean } } = {};
+			items.forEach((item) => {
+				if (item.type === 'note' && item.time && timeSlots.includes(item.time)) {
+					slotMap[item.time] = {
+						hasClass: true,
+						feedbackPending: !!(item as any).needSendFeedback && !(item as any).feedbackTaskDone,
+					};
+				}
+			});
+
+			if (Object.keys(slotMap).length === 0) return null;
+
 			return (
 				<div className="dots-wrapper">
-					{[...Array(Math.min(dotsCount, 2))].map((_, index) => (
-						<RxDotFilled key={index} viewBox="0 0 15 15" />
-					))}
-					{dotsCount > 2 && <span>+{dotsCount - 2}</span>}
+					{timeSlots.map((slot) => {
+						const slotData = slotMap[slot];
+						if (!slotData || !slotData.hasClass) return <div key={slot} className="oz-slot-empty" />;
+						const slotClass = slotData.feedbackPending
+							? 'oz-slot-filled oz-slot-pending'
+							: 'oz-slot-filled oz-slot-done';
+						const bgColor = slotData.feedbackPending
+							? plugin.settings.slotPendingColor
+							: plugin.settings.slotDoneColor;
+						return (
+							<div key={slot} className={slotClass} style={{ backgroundColor: bgColor }} />
+						);
+					})}
 				</div>
 			);
 		}

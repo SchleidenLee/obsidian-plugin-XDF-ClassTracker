@@ -26,6 +26,9 @@ export interface OZCalendarPluginSettings {
 	newNoteCancelButtonReverse: boolean;
 	fileNameOverflowBehaviour: OverflowBehaviour;
 	showWeekNumbers: boolean;
+	timeSlots: string[];
+	slotPendingColor: string;
+	slotDoneColor: string;
 }
 
 export const DEFAULT_SETTINGS: OZCalendarPluginSettings = {
@@ -45,6 +48,9 @@ export const DEFAULT_SETTINGS: OZCalendarPluginSettings = {
 	newNoteCancelButtonReverse: false,
 	fileNameOverflowBehaviour: 'hide',
 	showWeekNumbers: false,
+	timeSlots: ['10:00', '12:20', '15:30', '17:50', '20:10'],
+	slotPendingColor: '#c4a35a',
+	slotDoneColor: '#7a9e7e',
 };
 
 export class OZCalendarPluginSettingsTab extends PluginSettingTab {
@@ -179,10 +185,10 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 					.addOption('filename', 'File Name')
 					.addOption('yaml', 'YAML Key')
 					.setValue(this.plugin.settings.dateSource)
-					.onChange((newValue: DateSourceOption) => {
+					.onChange(async (newValue: DateSourceOption) => {
 						this.plugin.settings.dateSource = newValue;
 						this.plugin.saveSettings();
-						this.plugin.OZCALENDARDAYS_STATE = this.plugin.getNotesWithDates();
+						this.plugin.OZCALENDARDAYS_STATE = await this.plugin.getNotesWithDates();
 						this.plugin.calendarForceUpdate();
 						// If YAML selected, show the YAML key below, or hide if changed back to filename
 						let yamlKeySettingEl = document.querySelector('.oz-calendar-setting-yaml-key-value');
@@ -372,6 +378,167 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 						this.plugin.calendarForceUpdate();
 					});
 			});
+
+		containerEl.createEl('h2', { text: 'Class Slot Settings' });
+
+		new Setting(containerEl)
+			.setName('Number of Time Slots')
+			.setDesc('How many class periods per day (1-6)')
+			.addDropdown((dropdown) => {
+				for (let i = 1; i <= 6; i++) dropdown.addOption(String(i), `${i} slots`);
+				dropdown
+					.setValue(String(this.plugin.settings.timeSlots.length))
+					.onChange(async (newValue: string) => {
+						const count = parseInt(newValue);
+						const defaults = ['10:00', '12:20', '15:30', '17:50', '20:10', '21:30'];
+						const current = this.plugin.settings.timeSlots;
+						const newSlots = defaults.slice(0, count);
+						for (let i = 0; i < count; i++) {
+							if (current[i]) newSlots[i] = current[i];
+						}
+						this.plugin.settings.timeSlots = newSlots;
+						this.plugin.saveSettings();
+						this.plugin.calendarForceUpdate();
+						this.display();
+					});
+			});
+
+		this.plugin.settings.timeSlots.forEach((slot, index) => {
+			new Setting(containerEl)
+				.setName(`Slot ${index + 1} Time`)
+				.addText((text) => {
+					text.setValue(slot).onChange((newValue: string) => {
+						this.plugin.settings.timeSlots[index] = newValue.trim();
+						this.plugin.saveSettings();
+						this.plugin.calendarForceUpdate();
+					});
+				});
+		});
+
+		const colorPresets: { [key: string]: { pending: string; done: string } } = {
+			'Warm Sand': { pending: '#c4a35a', done: '#7a9e7e' },
+			'Sage & Dust': { pending: '#b8a072', done: '#6e9b8e' },
+			'Muted Earth': { pending: '#c9a96e', done: '#6b9e7e' },
+			'Deep Forest': { pending: '#8a7540', done: '#4a7e52' },
+			'Dusty Rose': { pending: '#c49494', done: '#7e8e94' },
+			'Plum & Mist': { pending: '#a0889e', done: '#6e9494' },
+			'Ocean Haze': { pending: '#8a9eb8', done: '#6e8e8e' },
+			'Sunset Clay': { pending: '#c48868', done: '#6e9e7e' },
+		};
+
+		const pendingColorOptions = [
+			'#c4a35a', '#b8a072', '#c9a96e', '#8a7540', '#c49494',
+			'#a0889e', '#8a9eb8', '#c48868', '#a0a8c4', '#b08d57',
+		];
+		const doneColorOptions = [
+			'#7a9e7e', '#6e9b8e', '#6b9e7e', '#4a7e52', '#7e8e94',
+			'#6e9494', '#6e8e8e', '#6e9e7e', '#6e8e9b', '#5a8e7e',
+			'#5a9e6f', '#6ea87a', '#5a8e6f', '#4a7e5f', '#6ba88a',
+		];
+
+		const colorPreviewDiv = containerEl.createDiv('oz-color-scheme-preview');
+		colorPreviewDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; padding: 8px; background: var(--background-secondary); border-radius: 6px;';
+
+		const pendingPreview = colorPreviewDiv.createDiv();
+		pendingPreview.style.cssText = `width: 24px; height: 16px; border-radius: 3px; background: ${this.plugin.settings.slotPendingColor};`;
+
+		const donePreview = colorPreviewDiv.createDiv();
+		donePreview.style.cssText = `width: 24px; height: 16px; border-radius: 3px; background: ${this.plugin.settings.slotDoneColor};`;
+
+		const previewLabel = colorPreviewDiv.createEl('span', { text: 'Pending / Done' });
+		previewLabel.style.cssText = 'font-size: 0.85em; color: var(--text-muted);';
+
+		const renderColorPicker = (
+			name: string,
+			desc: string,
+			currentColor: string,
+			options: string[],
+			applyColor: (color: string) => void
+		) => {
+			const setting = new Setting(containerEl).setName(name).setDesc(desc);
+
+			const swatchContainer = setting.controlEl.createDiv();
+			swatchContainer.style.cssText = 'display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;';
+
+			options.forEach((color) => {
+				const swatch = swatchContainer.createDiv();
+				swatch.style.cssText = `width: 20px; height: 20px; border-radius: 4px; background: ${color}; cursor: pointer; border: 2px solid ${color === currentColor ? 'var(--text-normal)' : 'transparent'};`;
+				swatch.addEventListener('click', () => {
+					applyColor(color);
+					this.display();
+				});
+			});
+
+			setting.addText((text) => {
+				text.setPlaceholder('#hexcolor').setValue(currentColor).onChange((newValue: string) => {
+					if (/^#[0-9a-fA-F]{6}$/.test(newValue)) {
+						applyColor(newValue);
+					}
+				});
+			});
+		};
+
+		renderColorPicker(
+			'Pending Color',
+			'Color for feedback not yet submitted',
+			this.plugin.settings.slotPendingColor,
+			pendingColorOptions,
+			(color: string) => {
+				this.plugin.settings.slotPendingColor = color;
+				this.plugin.saveSettings();
+				this.plugin.calendarForceUpdate();
+			}
+		);
+
+		renderColorPicker(
+			'Done Color',
+			'Color for feedback submitted',
+			this.plugin.settings.slotDoneColor,
+			doneColorOptions,
+			(color: string) => {
+				this.plugin.settings.slotDoneColor = color;
+				this.plugin.saveSettings();
+				this.plugin.calendarForceUpdate();
+			}
+		);
+
+		new Setting(containerEl)
+			.setName('Color Scheme Presets')
+			.setDesc('Apply a complete preset color scheme')
+			.addButton((btn) => {
+				btn.setButtonText('Reset Presets').onClick(async () => {
+					this.plugin.settings.timeSlots = ['10:00', '12:20', '15:30', '17:50', '20:10'];
+					this.plugin.settings.slotPendingColor = '#c4a35a';
+					this.plugin.settings.slotDoneColor = '#7a9e7e';
+					await this.plugin.saveSettings();
+					this.plugin.calendarForceUpdate();
+					this.display();
+				});
+			});
+
+		const presetGroupDiv = containerEl.createDiv('oz-preset-groups');
+		presetGroupDiv.style.cssText = 'display: flex; flex-direction: column; gap: 6px; margin: 8px 0;';
+
+		Object.entries(colorPresets).forEach(([name, colors]) => {
+			const row = presetGroupDiv.createDiv();
+			row.style.cssText = 'display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--background-secondary); border-radius: 6px; cursor: pointer;';
+			row.addEventListener('click', async () => {
+				this.plugin.settings.slotPendingColor = colors.pending;
+				this.plugin.settings.slotDoneColor = colors.done;
+				await this.plugin.saveSettings();
+				this.plugin.calendarForceUpdate();
+				this.display();
+			});
+
+			const pSwatch = row.createDiv();
+			pSwatch.style.cssText = `width: 18px; height: 18px; border-radius: 3px; background: ${colors.pending};`;
+
+			const dSwatch = row.createDiv();
+			dSwatch.style.cssText = `width: 18px; height: 18px; border-radius: 3px; background: ${colors.done};`;
+
+			const label = row.createEl('span', { text: name });
+			label.style.cssText = 'font-size: 0.9em;';
+		});
 
 		containerEl.createEl('h2', { text: 'Schedule Settings' });
 

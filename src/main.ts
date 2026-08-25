@@ -13,6 +13,7 @@ export default class OZCalendarPlugin extends Plugin {
 	dayjs = dayjs;
 	OZCALENDARDAYS_STATE: OZCalendarDaysMap = {};
 	scheduleData: ScheduleData = {};
+	feedbackCache: Map<string, { needSendFeedback?: boolean; feedbackTaskDone?: boolean }> = new Map();
 	initialScanCompleted: boolean = false;
 	EVENT_TYPES = {
 		forceUpdate: 'ozCalendarForceUpdate',
@@ -38,17 +39,17 @@ export default class OZCalendarPlugin extends Plugin {
 			return new OZCalendarView(leaf, this);
 		});
 
-		this.app.metadataCache.on('resolved', () => {
+		this.app.metadataCache.on('resolved', async () => {
 			// Run only during initial vault load, changes are handled separately
 			if (!this.initialScanCompleted) {
-				this.OZCALENDARDAYS_STATE = this.getNotesWithDates();
+				this.OZCALENDARDAYS_STATE = await this.getNotesWithDates();
 				this.initialScanCompleted = true;
 				this.calendarForceUpdate();
 			}
 		});
 
-		this.app.workspace.onLayoutReady(() => {
-			this.OZCALENDARDAYS_STATE = this.getNotesWithDates();
+		this.app.workspace.onLayoutReady(async () => {
+			this.OZCALENDARDAYS_STATE = await this.getNotesWithDates();
 			if (this.settings.openViewOnStart) {
 				this.openOZCalendarLeaf({ showAfterAttach: true });
 			}
@@ -158,18 +159,64 @@ export default class OZCalendarPlugin extends Plugin {
 	};
 
 	/**
+	 * Extract feedback info from file cache and content
+	 * @param file - The TFile to scan
+	 * @returns { needSendFeedback, feedbackTaskDone }
+	 */
+	extractFeedbackInfo = async (
+		file: TFile
+	): Promise<{ needSendFeedback?: boolean; feedbackTaskDone?: boolean }> => {
+		const cache = this.app.metadataCache.getCache(file.path);
+		let needSendFeedback = false;
+
+		if (cache?.frontmatter?.need_send_feedback !== undefined) {
+			needSendFeedback = cache.frontmatter.need_send_feedback === true;
+		}
+
+		if (!needSendFeedback) {
+			return {};
+		}
+
+		// Read file content to find the feedback task
+		let feedbackTaskDone = false;
+		try {
+			const content = await this.app.vault.read(file);
+			if (content.includes('- [x] 提交反馈')) {
+				feedbackTaskDone = true;
+			} else if (content.includes('- [ ] 提交反馈')) {
+				feedbackTaskDone = false;
+			}
+		} catch (e) {
+			// Ignore read errors
+		}
+
+		return { needSendFeedback: true, feedbackTaskDone };
+	};
+
+	/**
 	 * Adds the provided filePath to the corresponding date within plugin state
 	 * @param date
-	 * @param filePath
+	 * @param file
 	 * @param time - Optional time string (HH:mm) from YAML
+	 * @param needSendFeedback - Whether feedback needs to be sent
+	 * @param feedbackTaskDone - Whether feedback task is completed
 	 */
-	addFilePathToState = (date: string, file: TFile, time?: string) => {
+	addFilePathToState = (
+		date: string,
+		file: TFile,
+		time?: string,
+		needSendFeedback?: boolean,
+		feedbackTaskDone?: boolean
+	) => {
 		let newStateMap = this.OZCALENDARDAYS_STATE;
 		// if exists, add the new file path
 		if (date in newStateMap) {
-			newStateMap[date] = [...newStateMap[date], fileToOZItem({ note: file, time })];
+			newStateMap[date] = [
+				...newStateMap[date],
+				fileToOZItem({ note: file, time, needSendFeedback, feedbackTaskDone }),
+			];
 		} else {
-			newStateMap[date] = [fileToOZItem({ note: file, time })];
+			newStateMap[date] = [fileToOZItem({ note: file, time, needSendFeedback, feedbackTaskDone })];
 		}
 		this.OZCALENDARDAYS_STATE = newStateMap;
 	};
@@ -199,7 +246,7 @@ export default class OZCalendarPlugin extends Plugin {
 	 * @param file
 	 * @returns boolean (if any change happened, true)
 	 */
-	scanTFileDate = (file: TFile): boolean => {
+	scanTFileDate = async (file: TFile): Promise<boolean> => {
 		let cache = this.app.metadataCache.getCache(file.path);
 		let changeFlag = false;
 		if (cache && cache.frontmatter) {
@@ -209,7 +256,14 @@ export default class OZCalendarPlugin extends Plugin {
 					let fmValue = String(fm[k]);
 					let parsedDayISOString = dayjs(fmValue, this.settings.dateFormat).format('YYYY-MM-DD');
 					let time = this.extractTimeFromDate(fmValue);
-					this.addFilePathToState(parsedDayISOString, file, time);
+					const feedbackInfo = await this.extractFeedbackInfo(file);
+					this.addFilePathToState(
+						parsedDayISOString,
+						file,
+						time,
+						feedbackInfo.needSendFeedback,
+						feedbackInfo.feedbackTaskDone
+					);
 					changeFlag = true;
 				}
 			}
@@ -230,7 +284,10 @@ export default class OZCalendarPlugin extends Plugin {
 
 	/* ------------ HANDLE VAULT CHANGES - LISTENER FUNCTIONS ------------ */
 
-	handleCacheChange = (file: TFile, data: string, cache: CachedMetadata) => {
+	handleCacheChange = async (file: TFile, data: string, cache: CachedMetadata) => {
+		// Update feedback cache
+		this.feedbackCache.delete(file.path);
+
 		if (this.settings.dateSource === 'yaml') {
 			this.removeFilePathFromState(file.path);
 			if (cache && cache.frontmatter) {
@@ -240,13 +297,26 @@ export default class OZCalendarPlugin extends Plugin {
 						let fmValue = String(fm[k]);
 						let parsedDayISOString = dayjs(fmValue, this.settings.dateFormat).format('YYYY-MM-DD');
 						let time = this.extractTimeFromDate(fmValue);
+						const feedbackInfo = await this.extractFeedbackInfo(file);
 						// If date doesn't exist, create a new one
 						if (!(parsedDayISOString in this.OZCALENDARDAYS_STATE)) {
-							this.addFilePathToState(parsedDayISOString, file, time);
+							this.addFilePathToState(
+								parsedDayISOString,
+								file,
+								time,
+								feedbackInfo.needSendFeedback,
+								feedbackInfo.feedbackTaskDone
+							);
 						} else {
 							// if date exists and note is not in the date list
 							if (!(file.path in this.OZCALENDARDAYS_STATE[parsedDayISOString])) {
-								this.addFilePathToState(parsedDayISOString, file, time);
+								this.addFilePathToState(
+									parsedDayISOString,
+									file,
+									time,
+									feedbackInfo.needSendFeedback,
+									feedbackInfo.feedbackTaskDone
+								);
 							}
 						}
 					}
@@ -258,7 +328,10 @@ export default class OZCalendarPlugin extends Plugin {
 		}
 	};
 
-	handleRename = (file: TFile, oldPath: string) => {
+	handleRename = async (file: TFile, oldPath: string) => {
+		// Update feedback cache for renamed file
+		this.feedbackCache.delete(oldPath);
+
 		let changeFlag = false;
 		if (file instanceof TFile && file.extension === 'md') {
 			for (let k of Object.keys(this.OZCALENDARDAYS_STATE)) {
@@ -278,6 +351,10 @@ export default class OZCalendarPlugin extends Plugin {
 									}
 								}
 							}
+							// Re-extract feedback info
+							const feedbackInfo = await this.extractFeedbackInfo(file);
+							ozItem.needSendFeedback = feedbackInfo.needSendFeedback;
+							ozItem.feedbackTaskDone = feedbackInfo.feedbackTaskDone;
 							changeFlag = true;
 						} else if (this.settings.dateSource === 'filename') {
 							this.OZCALENDARDAYS_STATE[k] = this.OZCALENDARDAYS_STATE[k].filter((ozItem) => {
@@ -389,9 +466,11 @@ export default class OZCalendarPlugin extends Plugin {
 		this.app.plugins.enablePlugin('oz-calendar');
 	};
 
-	getNotesWithDates = (): OZCalendarDaysMap => {
+	getNotesWithDates = async (): Promise<OZCalendarDaysMap> => {
 		let mdFiles = this.app.vault.getMarkdownFiles();
 		let OZCalendarDays: OZCalendarDaysMap = {};
+		// Clear feedback cache before full scan
+		this.feedbackCache.clear();
 		for (let mdFile of mdFiles) {
 			if (this.settings.dateSource === 'yaml') {
 				// Get the file Cache
@@ -409,14 +488,28 @@ export default class OZCalendarPlugin extends Plugin {
 							let parsedDayISOString = parsedDayJsDate.format('YYYY-MM-DD');
 							// Extract time (HH:mm) from the full date
 							let time = parsedDayJsDate.format('HH:mm');
+							// Extract feedback info
+							const feedbackInfo = await this.extractFeedbackInfo(mdFile);
 							// Check if it already exists
 							if (parsedDayISOString in OZCalendarDays) {
 								OZCalendarDays[parsedDayISOString] = [
 									...OZCalendarDays[parsedDayISOString],
-									fileToOZItem({ note: mdFile, time }),
+									fileToOZItem({
+										note: mdFile,
+										time,
+										needSendFeedback: feedbackInfo.needSendFeedback,
+										feedbackTaskDone: feedbackInfo.feedbackTaskDone,
+									}),
 								];
 							} else {
-								OZCalendarDays[parsedDayISOString] = [fileToOZItem({ note: mdFile, time })];
+								OZCalendarDays[parsedDayISOString] = [
+									fileToOZItem({
+										note: mdFile,
+										time,
+										needSendFeedback: feedbackInfo.needSendFeedback,
+										feedbackTaskDone: feedbackInfo.feedbackTaskDone,
+									}),
+								];
 							}
 						}
 					}
@@ -426,13 +519,24 @@ export default class OZCalendarPlugin extends Plugin {
 				if (mdFile.name.length >= dateFormatLength) {
 					if (dayjs(mdFile.name, this.settings.dateFormat).isValid()) {
 						let parsedDayISOString = dayjs(mdFile.name, this.settings.dateFormat).format('YYYY-MM-DD');
+						const feedbackInfo = await this.extractFeedbackInfo(mdFile);
 						if (parsedDayISOString in OZCalendarDays) {
 							OZCalendarDays[parsedDayISOString] = [
 								...OZCalendarDays[parsedDayISOString],
-								fileToOZItem({ note: mdFile }),
+								fileToOZItem({
+									note: mdFile,
+									needSendFeedback: feedbackInfo.needSendFeedback,
+									feedbackTaskDone: feedbackInfo.feedbackTaskDone,
+								}),
 							];
 						} else {
-							OZCalendarDays[parsedDayISOString] = [fileToOZItem({ note: mdFile })];
+							OZCalendarDays[parsedDayISOString] = [
+								fileToOZItem({
+									note: mdFile,
+									needSendFeedback: feedbackInfo.needSendFeedback,
+									feedbackTaskDone: feedbackInfo.feedbackTaskDone,
+								}),
+							];
 						}
 					}
 				}

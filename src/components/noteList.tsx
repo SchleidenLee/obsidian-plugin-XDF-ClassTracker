@@ -149,6 +149,16 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 							)}
 							<HiOutlineDocumentText className="oz-calendar-note-line-icon" />
 							<span className="oz-calendar-note-name">{ozNote.displayName}</span>
+							{ozNote.needSendFeedback && (
+								<div
+									className="oz-calendar-feedback-indicator"
+									style={{
+										backgroundColor: ozNote.feedbackTaskDone
+											? plugin.settings.slotDoneColor
+											: plugin.settings.slotPendingColor,
+									}}
+								/>
+							)}
 						</div>
 					);
 				})}

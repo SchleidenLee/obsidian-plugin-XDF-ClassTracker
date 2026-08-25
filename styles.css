@@ -138,6 +138,12 @@ settings:
 .oz-calendar-plugin-view button.react-calendar__navigation__label {
 	color: var(--oz-calendar-header-date-color);
 	font-size: 1.3em;
+	font-weight: 700;
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.oz-calendar-plugin-view .react-calendar__month-view__days__day abbr {
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .oz-calendar-plugin-view .dots-wrapper {
@@ -198,6 +204,8 @@ settings:
 	text-align: center;
 	vertical-align: top;
 	font-size: 1.1em;
+	font-weight: 700;
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
 	color: var(--oz-calendar-header-date-color);
 	cursor: pointer;
 }
@@ -219,6 +227,9 @@ settings:
 	padding-top: 3px;
 	padding-bottom: 3px;
 	font-size: var(--nav-item-size);
+	display: flex;
+	align-items: center;
+	gap: 4px;
 }
 
 .oz-calendar-note-line:hover {
@@ -336,6 +347,36 @@ settings:
 
 .oz-calendar-note-name {
 	vertical-align: middle;
+	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Calendar time slot blocks */
+.oz-calendar-plugin-view .dots-wrapper {
+	font-size: 8px;
+	display: flex;
+	justify-content: center;
+	gap: 2px;
+	min-height: 10px;
+}
+
+.oz-slot-empty {
+	flex: 1;
+	height: 6px;
+}
+
+.oz-slot-filled {
+	flex: 1;
+	height: 6px;
+	border-radius: 1px;
+}
+
+/* Feedback indicator on note list */
+.oz-calendar-feedback-indicator {
+	width: 10px;
+	height: 10px;
+	border-radius: 2px;
+	margin-left: auto;
+	flex-shrink: 0;
 }
 
 /* Schedule day styles for main calendar */

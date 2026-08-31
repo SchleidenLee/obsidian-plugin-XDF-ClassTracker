@@ -1,7 +1,7 @@
 {
 	"id": "xdf-classtracker",
 	"name": "XDF ClassTracker",
-	"version": "0.3.4",
+	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "View your notes in Calendar using any YAML key with date",
 	"author": "Ozan Tellioglu",

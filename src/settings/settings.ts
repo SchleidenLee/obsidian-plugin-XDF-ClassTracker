@@ -89,13 +89,13 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 
 		/* ------------- General Settings ------------- */
 
-		containerEl.createEl('h1', { text: 'OZ Calendar Plugin Settings' });
+		containerEl.createEl('h1', { text: 'XDF ClassTracker 插件设置' });
 
-		containerEl.createEl('h2', { text: 'General Settings' });
+		containerEl.createEl('h2', { text: '通用设置' });
 
 		new Setting(containerEl)
-			.setName('Open Calendar on Start')
-			.setDesc('Disable if you dont want Calendar View to be opened during the initial vault launch')
+			.setName('启动时打开日历')
+			.setDesc('关闭后，启动 Obsidian 时不会自动打开日历视图')
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.openViewOnStart).onChange((newValue) => {
 					this.plugin.settings.openViewOnStart = newValue;
@@ -104,16 +104,12 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Calendar Type')
-			.setDesc(
-				`
-                Select the calendar type to be displayed. While the week in the US type starts from Sunday,
-                in the ISO 8601 type, the week starts from Monday`
-			)
+			.setName('日历类型')
+			.setDesc('选择日历显示类型。US 类型从周日开始，ISO 8601 类型从周一开始')
 			.addDropdown((dropdown) => {
 				dropdown
-					.addOption('ISO 8601', 'ISO 8601')
-					.addOption('US', 'US')
+					.addOption('ISO 8601', 'ISO 8601（周一开始）')
+					.addOption('US', 'US（周日开始）')
 					.setValue(this.plugin.settings.calendarType)
 					.onChange((newValue: CalendarType) => {
 						this.plugin.settings.calendarType = newValue;
@@ -123,8 +119,8 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Show Week Numbers')
-			.setDesc('Enable if you want to have week numbers within the calendar view')
+			.setName('显示周数')
+			.setDesc('开启后，日历视图将显示周数')
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.showWeekNumbers).onChange((newValue) => {
 					this.plugin.settings.showWeekNumbers = newValue;
@@ -134,14 +130,14 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Open File Behaviour')
-			.setDesc('Select the behaviour you want to have when you click on file name in the calendar view')
+			.setName('文件打开方式')
+			.setDesc('选择点击日历视图中的文件名时的打开方式')
 			.addDropdown((dropdown) => {
 				dropdown
-					.addOption('obsidian-default', "Obsidian's Default")
-					.addOption('new-tab', 'Open in a New Tab')
-					.addOption('new-tab-group', 'Open in a New Tab Group')
-					.addOption('current-tab', 'Open in the Active Tab')
+					.addOption('obsidian-default', 'Obsidian 默认行为')
+					.addOption('new-tab', '在新标签页打开')
+					.addOption('new-tab-group', '在新标签组打开')
+					.addOption('current-tab', '在当前标签页打开')
 					.setValue(this.plugin.settings.openFileBehaviour)
 					.onChange((newValue: OpenFileBehaviourType) => {
 						this.plugin.settings.openFileBehaviour = newValue;
@@ -150,12 +146,12 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('File List Sorting')
-			.setDesc('Select the sorting behaviour in the file list')
+			.setName('笔记列表排序')
+			.setDesc('选择笔记列表的排序方式')
 			.addDropdown((dropdown) => {
 				dropdown
-					.addOption('name', 'File Name (A to Z)')
-					.addOption('name-rev', 'File Name (Z to A)')
+					.addOption('name', '文件名（A-Z）')
+					.addOption('name-rev', '文件名（Z-A）')
 					.setValue(this.plugin.settings.sortingOption)
 					.onChange((newValue: SortingOption) => {
 						this.plugin.settings.sortingOption = newValue;
@@ -164,26 +160,20 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 					});
 			});
 
-		containerEl.createEl('h2', { text: 'YAML, File Name and Date Format Settings' });
+		containerEl.createEl('h2', { text: '日期来源与格式设置' });
 
 		containerEl.createEl('p', {
-			text: `
-            When you make a change under this section for YAML Key and Date Format, make sure that
-            you also use "Reload Plugin" button so that the changes can be activated.
-            `,
+			text: '修改 YAML 键名或日期格式后，请点击下方「重新加载插件」按钮使更改生效。',
 			cls: 'setting-item-description',
 		});
 
 		new Setting(containerEl)
-			.setName('Date Source')
-			.setDesc(
-				`Select the date source to be used in each folder. It can be either YAML Key or File Name.
-                Depending on what you provide within the date format, it will try to parse the date source.`
-			)
+			.setName('日期来源')
+			.setDesc('选择每个文件夹使用的日期来源，可以是 YAML 键名或文件名。插件将根据日期格式设置来解析日期。')
 			.addDropdown((dropdown) => {
 				dropdown
-					.addOption('filename', 'File Name')
-					.addOption('yaml', 'YAML Key')
+					.addOption('filename', '文件名')
+					.addOption('yaml', 'YAML 键名')
 					.setValue(this.plugin.settings.dateSource)
 					.onChange(async (newValue: DateSourceOption) => {
 						this.plugin.settings.dateSource = newValue;
@@ -204,8 +194,8 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 
 		let yamlKeySetting = new Setting(containerEl)
 			.setClass('oz-calendar-setting-yaml-key-value')
-			.setName('YAML Key')
-			.setDesc('Set the YAML Key that should be used for displaying in the calendar')
+			.setName('YAML 键名')
+			.setDesc('设置日历中使用的 YAML 键名')
 			.addText((text) => {
 				text.setValue(this.plugin.settings.yamlKey).onChange((newValue) => {
 					this.plugin.settings.yamlKey = newValue;
@@ -216,13 +206,8 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 		if (this.plugin.settings.dateSource === 'filename') yamlKeySetting.setClass('oz-calendar-custom-hidden');
 
 		new Setting(containerEl)
-			.setName('Date Format')
-			.setDesc(
-				`Set the Date format you are using within the YAML key or File Name provided above. 
-                If you are using File Name, make sure that you dont have any special characters since Obsidian doesnt
-                support special characters in the file name like colon. Reload the plugin using the following button
-                in case you change this value`
-			)
+			.setName('日期格式')
+			.setDesc('设置 YAML 键名或文件名中使用的日期格式。如果使用文件名，请避免使用 Obsidian 不支持的特殊字符（如冒号）。修改此值后请重新加载插件。')
 			.addText((text) => {
 				text.setValue(this.plugin.settings.dateFormat).onChange((newValue) => {
 					this.plugin.settings.dateFormat = newValue;
@@ -231,38 +216,29 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Reload the plugin')
-			.setDesc('Make sure that you reload the plugin if you changed YAML key or Date Format')
+			.setName('重新加载插件')
+			.setDesc('修改 YAML 键名或日期格式后，请点击此按钮重新加载插件')
 			.addButton((button) => {
-				button.setButtonText('Reload Plugin');
+				button.setButtonText('重新加载插件');
 				button.onClick(() => {
 					this.plugin.reloadPlugin();
 				});
 			});
 
-		containerEl.createEl('h2', { text: 'New Note Settings' });
+		containerEl.createEl('h2', { text: '新建笔记设置' });
 
 		containerEl.createEl('p', {
-			text: `
-                The plugin will add the YAML key and date to the newly created note using the date format provided above 
-                if Date Source is YAML. However, auto YAML key generation for the notes is going to be disabled if you use
-                File Name as date source.
-            `,
+			text: '如果日期来源设为 YAML，插件将使用上述日期格式自动为新笔记添加 YAML 键名和日期。如果选择文件名作为日期来源，则不会自动生成 YAML。',
 			cls: 'setting-item-description',
 		});
 
 		new Setting(containerEl)
-			.setName('New Note Date')
-			.setDesc(
-				`
-                Define the default behaviour for new note button if it should create under the active date or current date (today).
-                This setting will drive the date for the YAML Key value and File Name.
-                `
-			)
+			.setName('新建笔记日期')
+			.setDesc('定义新建笔记时使用的日期：当前选中的日期 或 今天')
 			.addDropdown((dropdown) => {
 				dropdown
-					.addOption('active-date', 'Active Date (Selected)')
-					.addOption('current-date', 'Current Date (Today)')
+					.addOption('active-date', '当前选中日期')
+					.addOption('current-date', '今天')
 					.setValue(this.plugin.settings.newNoteDate)
 					.onChange((newValue: NewNoteDateType) => {
 						this.plugin.settings.newNoteDate = newValue;
@@ -271,11 +247,11 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Default Folder Location')
-			.setDesc('Select the default folder, under which the new files should be saved when use plugin + icon')
+			.setName('默认文件夹')
+			.setDesc('选择新建笔记的默认保存位置')
 			.addSearch((cb) => {
 				new FolderSuggest(cb.inputEl);
-				cb.setPlaceholder('Example: folder1/folder2')
+				cb.setPlaceholder('例如: folder1/folder2')
 					.setValue(this.plugin.settings.defaultFolder)
 					.onChange((new_folder) => {
 						this.plugin.settings.defaultFolder = new_folder;
@@ -284,10 +260,8 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Default File Name Prefix Date Format')
-			.setDesc(
-				'Set the default file name prefix date format that will be used when you create a note using + icon. Leave blank if you dont want any'
-			)
+			.setName('文件名前缀日期格式')
+			.setDesc('设置使用 + 按钮新建笔记时，文件名前缀的日期格式。留空则不添加前缀')
 			.addText((text) => {
 				text.setValue(this.plugin.settings.defaultFileNamePrefix).onChange((newValue) => {
 					this.plugin.settings.defaultFileNamePrefix = newValue;
@@ -296,15 +270,8 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Show Destination Folder During File Creation')
-			.setDesc(
-				`
-                Disable this if you dont want to see the destination folder selection during 
-                the file creation process. The value is always going to be defaulted to the
-                selected Default Folder above. You can change the destination folder for each
-                folder separately but the default value will always stay same.
-                `
-			)
+			.setName('新建时显示文件夹选择')
+			.setDesc('关闭后，新建笔记时将不会弹出文件夹选择窗口，直接保存到上方设置的默认文件夹')
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.showDestinationFolderDuringCreate).onChange((newValue) => {
 					this.plugin.settings.showDestinationFolderDuringCreate = newValue;
@@ -313,15 +280,8 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Allow to provide slash during the file creation')
-			.setDesc(
-				`
-                Enable this option if you want to allow file creation modal to allow slash (/) in the filename, which will help creating a folder. 
-                i.e. if this option is enabled and you provide an input like Folder1/File1, this will create Folder1 and place File1 under it. If 
-                the folder exists, the file will be placed under the existing folder. This will respect the default folder location and create the 
-                new folder as a subfolder under the default one.
-                `
-			)
+			.setName('允许文件名中使用斜杠')
+			.setDesc('开启后，文件名中的斜杠 (/) 将被识别为子文件夹。例如输入 Folder1/File1，将创建 Folder1 文件夹并将 File1 保存在其中')
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.allowSlashhDuringCreate).onChange((newValue) => {
 					this.plugin.settings.allowSlashhDuringCreate = newValue;
@@ -330,10 +290,8 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('Reverse direction of Cancel and New Note Buttons')
-			.setDesc(
-				`Enable this setting to change the direction of Cancel and New Note buttons within the New Note Creation Modal`
-			)
+			.setName('反转取消和确认按钮')
+			.setDesc('开启后，新建笔记弹窗中的取消和确认按钮位置将互换')
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.newNoteCancelButtonReverse).onChange((newValue) => {
 					this.plugin.settings.newNoteCancelButtonReverse = newValue;
@@ -341,20 +299,16 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 				});
 			});
 
-		containerEl.createEl('h2', { text: 'Style Settings' });
+		containerEl.createEl('h2', { text: '外观设置' });
 
 		containerEl.createEl('p', {
-			text: `
-            You can adjust most of the style settings using Style Settings plugin. Please download from Community Plugins
-            to be able to adjust colors, etc. Below you can find some of the Style Settings that can not be incorporated
-            to the Style Settings
-        `,
+			text: '大部分外观设置可通过安装「Style Settings」插件进行调整。下方列出的是 Style Settings 插件无法覆盖的样式选项。',
 			cls: 'setting-item-description',
 		});
 
 		new Setting(containerEl)
-			.setName('Fixed Calendar (Only File List Scrollable)')
-			.setDesc('Disable this if you want whole calendar view to be scrollable and not only the file list')
+			.setName('固定日历高度')
+			.setDesc('开启后，只有笔记列表可滚动，日历部分保持固定')
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.fixedCalendar).onChange((newValue) => {
 					this.plugin.settings.fixedCalendar = newValue;
@@ -364,13 +318,13 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('File Names Overflow Behaviour')
-			.setDesc('Change the default behaviour for file names when they dont fit to the view')
+			.setName('文件名过长时的行为')
+			.setDesc('当文件名超出显示宽度时的处理方式')
 			.addDropdown((dropdown) => {
 				dropdown
-					.addOption('hide', 'Hide Overflow')
-					.addOption('scroll', 'Scroll Overflow')
-					.addOption('next-line', 'Show Overflow in the Next Line')
+					.addOption('hide', '隐藏超出部分')
+					.addOption('scroll', '水平滚动显示')
+					.addOption('next-line', '换行显示')
 					.setValue(this.plugin.settings.fileNameOverflowBehaviour)
 					.onChange((newValue: OverflowBehaviour) => {
 						this.plugin.settings.fileNameOverflowBehaviour = newValue;
@@ -379,13 +333,13 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 					});
 			});
 
-		containerEl.createEl('h2', { text: 'Class Slot Settings' });
+		containerEl.createEl('h2', { text: '课节时段设置' });
 
 		new Setting(containerEl)
-			.setName('Number of Time Slots')
-			.setDesc('How many class periods per day (1-6)')
+			.setName('每天课节数')
+			.setDesc('每天有几节课（1-6 节）')
 			.addDropdown((dropdown) => {
-				for (let i = 1; i <= 6; i++) dropdown.addOption(String(i), `${i} slots`);
+				for (let i = 1; i <= 6; i++) dropdown.addOption(String(i), `${i} 节`);
 				dropdown
 					.setValue(String(this.plugin.settings.timeSlots.length))
 					.onChange(async (newValue: string) => {
@@ -405,7 +359,7 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 
 		this.plugin.settings.timeSlots.forEach((slot, index) => {
 			new Setting(containerEl)
-				.setName(`Slot ${index + 1} Time`)
+				.setName(`第 ${index + 1} 节时间`)
 				.addText((text) => {
 					text.setValue(slot).onChange((newValue: string) => {
 						this.plugin.settings.timeSlots[index] = newValue.trim();
@@ -445,7 +399,7 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 		const donePreview = colorPreviewDiv.createDiv();
 		donePreview.style.cssText = `width: 24px; height: 16px; border-radius: 3px; background: ${this.plugin.settings.slotDoneColor};`;
 
-		const previewLabel = colorPreviewDiv.createEl('span', { text: 'Pending / Done' });
+		const previewLabel = colorPreviewDiv.createEl('span', { text: '待提交 / 已完成' });
 		previewLabel.style.cssText = 'font-size: 0.85em; color: var(--text-muted);';
 
 		const renderColorPicker = (
@@ -479,8 +433,8 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 		};
 
 		renderColorPicker(
-			'Pending Color',
-			'Color for feedback not yet submitted',
+			'待提交颜色',
+			'反馈尚未提交时的色块颜色',
 			this.plugin.settings.slotPendingColor,
 			pendingColorOptions,
 			(color: string) => {
@@ -491,8 +445,8 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 		);
 
 		renderColorPicker(
-			'Done Color',
-			'Color for feedback submitted',
+			'已完成颜色',
+			'反馈已提交时的色块颜色',
 			this.plugin.settings.slotDoneColor,
 			doneColorOptions,
 			(color: string) => {
@@ -503,10 +457,10 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 		);
 
 		new Setting(containerEl)
-			.setName('Color Scheme Presets')
-			.setDesc('Apply a complete preset color scheme')
+			.setName('配色方案')
+			.setDesc('一键应用预设配色方案')
 			.addButton((btn) => {
-				btn.setButtonText('Reset Presets').onClick(async () => {
+				btn.setButtonText('重置为默认配色').onClick(async () => {
 					this.plugin.settings.timeSlots = ['10:00', '12:20', '15:30', '17:50', '20:10'];
 					this.plugin.settings.slotPendingColor = '#c4a35a';
 					this.plugin.settings.slotDoneColor = '#7a9e7e';
@@ -540,23 +494,23 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			label.style.cssText = 'font-size: 0.9em;';
 		});
 
-		containerEl.createEl('h2', { text: 'Schedule Settings' });
+		containerEl.createEl('h2', { text: '排班设置' });
 
 		new Setting(containerEl)
-			.setName('Edit Schedule')
-			.setDesc('Open the schedule editor to mark rest days and overtime days')
+			.setName('编辑排班表')
+			.setDesc('打开排班编辑器，标记休息日和加班日')
 			.addButton((button) => {
-				button.setButtonText('Open Schedule Editor');
+				button.setButtonText('打开排班编辑器');
 				button.onClick(() => {
 					this.plugin.openScheduleModal();
 				});
 			});
 
 		new Setting(containerEl)
-			.setName('Clear All Schedule Data')
-			.setDesc('Remove all schedule data (this action cannot be undone)')
+			.setName('清空排班数据')
+			.setDesc('删除所有排班数据（此操作不可撤销）')
 			.addButton((button) => {
-				button.setButtonText('Clear All');
+				button.setButtonText('清空');
 				button.setWarning();
 				button.onClick(async () => {
 					this.plugin.scheduleData = {};

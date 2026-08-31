@@ -65,31 +65,168 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 		let { containerEl } = this;
 		containerEl.empty();
 
-		/* ------------- Buy Me a Coffee ------------- */
-
-		const tipDiv = containerEl.createDiv('tip');
-		tipDiv.addClass('oz-cal-tip-div');
-		const tipLink = tipDiv.createEl('a', { href: 'https://revolut.me/ozante' });
-		const tipImg = tipLink.createEl('img', {
-			attr: {
-				src: 'https://raw.githubusercontent.com/ozntel/file-tree-alternative/main/images/tip%20the%20artist_v2.png',
-			},
-		});
-		tipImg.height = 55;
-
-		const coffeeDiv = containerEl.createDiv('coffee');
-		coffeeDiv.addClass('oz-cal-coffee-div');
-		const coffeeLink = coffeeDiv.createEl('a', { href: 'https://ko-fi.com/L3L356V6Q' });
-		const coffeeImg = coffeeLink.createEl('img', {
-			attr: {
-				src: 'https://cdn.ko-fi.com/cdn/kofi2.png?v=3',
-			},
-		});
-		coffeeImg.height = 45;
-
-		/* ------------- General Settings ------------- */
-
 		containerEl.createEl('h1', { text: 'XDF ClassTracker 插件设置' });
+
+		containerEl.createEl('h2', { text: '课节时段设置' });
+
+		new Setting(containerEl)
+			.setName('每天课节数')
+			.setDesc('每天有几节课（1-6 节）')
+			.addDropdown((dropdown) => {
+				for (let i = 1; i <= 6; i++) dropdown.addOption(String(i), `${i} 节`);
+				dropdown
+					.setValue(String(this.plugin.settings.timeSlots.length))
+					.onChange(async (newValue: string) => {
+						const count = parseInt(newValue);
+						const defaults = ['10:00', '12:20', '15:30', '17:50', '20:10', '21:30'];
+						const current = this.plugin.settings.timeSlots;
+						const newSlots = defaults.slice(0, count);
+						for (let i = 0; i < count; i++) {
+							if (current[i]) newSlots[i] = current[i];
+						}
+						this.plugin.settings.timeSlots = newSlots;
+						this.plugin.saveSettings();
+						this.plugin.calendarForceUpdate();
+						this.display();
+					});
+			});
+
+		this.plugin.settings.timeSlots.forEach((slot, index) => {
+			new Setting(containerEl)
+				.setName(`第 ${index + 1} 节时间`)
+				.addText((text) => {
+					text.setValue(slot).onChange((newValue: string) => {
+						this.plugin.settings.timeSlots[index] = newValue.trim();
+						this.plugin.saveSettings();
+						this.plugin.calendarForceUpdate();
+					});
+				});
+		});
+
+		const colorPresets: { [key: string]: { pending: string; done: string } } = {
+			'Warm Sand': { pending: '#c4a35a', done: '#7a9e7e' },
+			'Sage & Dust': { pending: '#b8a072', done: '#6e9b8e' },
+			'Muted Earth': { pending: '#c9a96e', done: '#6b9e7e' },
+			'Deep Forest': { pending: '#8a7540', done: '#4a7e52' },
+			'Dusty Rose': { pending: '#c49494', done: '#7e8e94' },
+			'Plum & Mist': { pending: '#a0889e', done: '#6e9494' },
+			'Ocean Haze': { pending: '#8a9eb8', done: '#6e8e8e' },
+			'Sunset Clay': { pending: '#c48868', done: '#6e9e7e' },
+		};
+
+		const pendingColorOptions = [
+			'#c4a35a', '#b8a072', '#c9a96e', '#8a7540', '#c49494',
+			'#a0889e', '#8a9eb8', '#c48868', '#a0a8c4', '#b08d57',
+		];
+		const doneColorOptions = [
+			'#7a9e7e', '#6e9b8e', '#6b9e7e', '#4a7e52', '#7e8e94',
+			'#6e9494', '#6e8e8e', '#6e9e7e', '#6e8e9b', '#5a8e7e',
+			'#5a9e6f', '#6ea87a', '#5a8e6f', '#4a7e5f', '#6ba88a',
+		];
+
+		const colorPreviewDiv = containerEl.createDiv('oz-color-scheme-preview');
+		colorPreviewDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; padding: 8px; background: var(--background-secondary); border-radius: 6px;';
+
+		const pendingPreview = colorPreviewDiv.createDiv();
+		pendingPreview.style.cssText = `width: 24px; height: 16px; border-radius: 3px; background: ${this.plugin.settings.slotPendingColor};`;
+
+		const donePreview = colorPreviewDiv.createDiv();
+		donePreview.style.cssText = `width: 24px; height: 16px; border-radius: 3px; background: ${this.plugin.settings.slotDoneColor};`;
+
+		const previewLabel = colorPreviewDiv.createEl('span', { text: '待提交 / 已完成' });
+		previewLabel.style.cssText = 'font-size: 0.85em; color: var(--text-muted);';
+
+		const renderColorPicker = (
+			name: string,
+			desc: string,
+			currentColor: string,
+			options: string[],
+			applyColor: (color: string) => void
+		) => {
+			const setting = new Setting(containerEl).setName(name).setDesc(desc);
+
+			const swatchContainer = setting.controlEl.createDiv();
+			swatchContainer.style.cssText = 'display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;';
+
+			options.forEach((color) => {
+				const swatch = swatchContainer.createDiv();
+				swatch.style.cssText = `width: 20px; height: 20px; border-radius: 4px; background: ${color}; cursor: pointer; border: 2px solid ${color === currentColor ? 'var(--text-normal)' : 'transparent'};`;
+				swatch.addEventListener('click', () => {
+					applyColor(color);
+					this.display();
+				});
+			});
+
+			setting.addText((text) => {
+				text.setPlaceholder('#hexcolor').setValue(currentColor).onChange((newValue: string) => {
+					if (/^#[0-9a-fA-F]{6}$/.test(newValue)) {
+						applyColor(newValue);
+					}
+				});
+			});
+		};
+
+		renderColorPicker(
+			'待提交颜色',
+			'反馈尚未提交时的色块颜色',
+			this.plugin.settings.slotPendingColor,
+			pendingColorOptions,
+			(color: string) => {
+				this.plugin.settings.slotPendingColor = color;
+				this.plugin.saveSettings();
+				this.plugin.calendarForceUpdate();
+			}
+		);
+
+		renderColorPicker(
+			'已完成颜色',
+			'反馈已提交时的色块颜色',
+			this.plugin.settings.slotDoneColor,
+			doneColorOptions,
+			(color: string) => {
+				this.plugin.settings.slotDoneColor = color;
+				this.plugin.saveSettings();
+				this.plugin.calendarForceUpdate();
+			}
+		);
+
+		new Setting(containerEl)
+			.setName('配色方案')
+			.setDesc('一键应用预设配色方案')
+			.addButton((btn) => {
+				btn.setButtonText('重置为默认配色').onClick(async () => {
+					this.plugin.settings.timeSlots = ['10:00', '12:20', '15:30', '17:50', '20:10'];
+					this.plugin.settings.slotPendingColor = '#c4a35a';
+					this.plugin.settings.slotDoneColor = '#7a9e7e';
+					await this.plugin.saveSettings();
+					this.plugin.calendarForceUpdate();
+					this.display();
+				});
+			});
+
+		const presetGroupDiv = containerEl.createDiv('oz-preset-groups');
+		presetGroupDiv.style.cssText = 'display: flex; flex-direction: column; gap: 6px; margin: 8px 0;';
+
+		Object.entries(colorPresets).forEach(([name, colors]) => {
+			const row = presetGroupDiv.createDiv();
+			row.style.cssText = 'display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--background-secondary); border-radius: 6px; cursor: pointer;';
+			row.addEventListener('click', async () => {
+				this.plugin.settings.slotPendingColor = colors.pending;
+				this.plugin.settings.slotDoneColor = colors.done;
+				await this.plugin.saveSettings();
+				this.plugin.calendarForceUpdate();
+				this.display();
+			});
+
+			const pSwatch = row.createDiv();
+			pSwatch.style.cssText = `width: 18px; height: 18px; border-radius: 3px; background: ${colors.pending};`;
+
+			const dSwatch = row.createDiv();
+			dSwatch.style.cssText = `width: 18px; height: 18px; border-radius: 3px; background: ${colors.done};`;
+
+			const label = row.createEl('span', { text: name });
+			label.style.cssText = 'font-size: 0.9em;';
+		});
 
 		containerEl.createEl('h2', { text: '通用设置' });
 
@@ -332,167 +469,6 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 						this.plugin.calendarForceUpdate();
 					});
 			});
-
-		containerEl.createEl('h2', { text: '课节时段设置' });
-
-		new Setting(containerEl)
-			.setName('每天课节数')
-			.setDesc('每天有几节课（1-6 节）')
-			.addDropdown((dropdown) => {
-				for (let i = 1; i <= 6; i++) dropdown.addOption(String(i), `${i} 节`);
-				dropdown
-					.setValue(String(this.plugin.settings.timeSlots.length))
-					.onChange(async (newValue: string) => {
-						const count = parseInt(newValue);
-						const defaults = ['10:00', '12:20', '15:30', '17:50', '20:10', '21:30'];
-						const current = this.plugin.settings.timeSlots;
-						const newSlots = defaults.slice(0, count);
-						for (let i = 0; i < count; i++) {
-							if (current[i]) newSlots[i] = current[i];
-						}
-						this.plugin.settings.timeSlots = newSlots;
-						this.plugin.saveSettings();
-						this.plugin.calendarForceUpdate();
-						this.display();
-					});
-			});
-
-		this.plugin.settings.timeSlots.forEach((slot, index) => {
-			new Setting(containerEl)
-				.setName(`第 ${index + 1} 节时间`)
-				.addText((text) => {
-					text.setValue(slot).onChange((newValue: string) => {
-						this.plugin.settings.timeSlots[index] = newValue.trim();
-						this.plugin.saveSettings();
-						this.plugin.calendarForceUpdate();
-					});
-				});
-		});
-
-		const colorPresets: { [key: string]: { pending: string; done: string } } = {
-			'Warm Sand': { pending: '#c4a35a', done: '#7a9e7e' },
-			'Sage & Dust': { pending: '#b8a072', done: '#6e9b8e' },
-			'Muted Earth': { pending: '#c9a96e', done: '#6b9e7e' },
-			'Deep Forest': { pending: '#8a7540', done: '#4a7e52' },
-			'Dusty Rose': { pending: '#c49494', done: '#7e8e94' },
-			'Plum & Mist': { pending: '#a0889e', done: '#6e9494' },
-			'Ocean Haze': { pending: '#8a9eb8', done: '#6e8e8e' },
-			'Sunset Clay': { pending: '#c48868', done: '#6e9e7e' },
-		};
-
-		const pendingColorOptions = [
-			'#c4a35a', '#b8a072', '#c9a96e', '#8a7540', '#c49494',
-			'#a0889e', '#8a9eb8', '#c48868', '#a0a8c4', '#b08d57',
-		];
-		const doneColorOptions = [
-			'#7a9e7e', '#6e9b8e', '#6b9e7e', '#4a7e52', '#7e8e94',
-			'#6e9494', '#6e8e8e', '#6e9e7e', '#6e8e9b', '#5a8e7e',
-			'#5a9e6f', '#6ea87a', '#5a8e6f', '#4a7e5f', '#6ba88a',
-		];
-
-		const colorPreviewDiv = containerEl.createDiv('oz-color-scheme-preview');
-		colorPreviewDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; padding: 8px; background: var(--background-secondary); border-radius: 6px;';
-
-		const pendingPreview = colorPreviewDiv.createDiv();
-		pendingPreview.style.cssText = `width: 24px; height: 16px; border-radius: 3px; background: ${this.plugin.settings.slotPendingColor};`;
-
-		const donePreview = colorPreviewDiv.createDiv();
-		donePreview.style.cssText = `width: 24px; height: 16px; border-radius: 3px; background: ${this.plugin.settings.slotDoneColor};`;
-
-		const previewLabel = colorPreviewDiv.createEl('span', { text: '待提交 / 已完成' });
-		previewLabel.style.cssText = 'font-size: 0.85em; color: var(--text-muted);';
-
-		const renderColorPicker = (
-			name: string,
-			desc: string,
-			currentColor: string,
-			options: string[],
-			applyColor: (color: string) => void
-		) => {
-			const setting = new Setting(containerEl).setName(name).setDesc(desc);
-
-			const swatchContainer = setting.controlEl.createDiv();
-			swatchContainer.style.cssText = 'display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;';
-
-			options.forEach((color) => {
-				const swatch = swatchContainer.createDiv();
-				swatch.style.cssText = `width: 20px; height: 20px; border-radius: 4px; background: ${color}; cursor: pointer; border: 2px solid ${color === currentColor ? 'var(--text-normal)' : 'transparent'};`;
-				swatch.addEventListener('click', () => {
-					applyColor(color);
-					this.display();
-				});
-			});
-
-			setting.addText((text) => {
-				text.setPlaceholder('#hexcolor').setValue(currentColor).onChange((newValue: string) => {
-					if (/^#[0-9a-fA-F]{6}$/.test(newValue)) {
-						applyColor(newValue);
-					}
-				});
-			});
-		};
-
-		renderColorPicker(
-			'待提交颜色',
-			'反馈尚未提交时的色块颜色',
-			this.plugin.settings.slotPendingColor,
-			pendingColorOptions,
-			(color: string) => {
-				this.plugin.settings.slotPendingColor = color;
-				this.plugin.saveSettings();
-				this.plugin.calendarForceUpdate();
-			}
-		);
-
-		renderColorPicker(
-			'已完成颜色',
-			'反馈已提交时的色块颜色',
-			this.plugin.settings.slotDoneColor,
-			doneColorOptions,
-			(color: string) => {
-				this.plugin.settings.slotDoneColor = color;
-				this.plugin.saveSettings();
-				this.plugin.calendarForceUpdate();
-			}
-		);
-
-		new Setting(containerEl)
-			.setName('配色方案')
-			.setDesc('一键应用预设配色方案')
-			.addButton((btn) => {
-				btn.setButtonText('重置为默认配色').onClick(async () => {
-					this.plugin.settings.timeSlots = ['10:00', '12:20', '15:30', '17:50', '20:10'];
-					this.plugin.settings.slotPendingColor = '#c4a35a';
-					this.plugin.settings.slotDoneColor = '#7a9e7e';
-					await this.plugin.saveSettings();
-					this.plugin.calendarForceUpdate();
-					this.display();
-				});
-			});
-
-		const presetGroupDiv = containerEl.createDiv('oz-preset-groups');
-		presetGroupDiv.style.cssText = 'display: flex; flex-direction: column; gap: 6px; margin: 8px 0;';
-
-		Object.entries(colorPresets).forEach(([name, colors]) => {
-			const row = presetGroupDiv.createDiv();
-			row.style.cssText = 'display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--background-secondary); border-radius: 6px; cursor: pointer;';
-			row.addEventListener('click', async () => {
-				this.plugin.settings.slotPendingColor = colors.pending;
-				this.plugin.settings.slotDoneColor = colors.done;
-				await this.plugin.saveSettings();
-				this.plugin.calendarForceUpdate();
-				this.display();
-			});
-
-			const pSwatch = row.createDiv();
-			pSwatch.style.cssText = `width: 18px; height: 18px; border-radius: 3px; background: ${colors.pending};`;
-
-			const dSwatch = row.createDiv();
-			dSwatch.style.cssText = `width: 18px; height: 18px; border-radius: 3px; background: ${colors.done};`;
-
-			const label = row.createEl('span', { text: name });
-			label.style.cssText = 'font-size: 0.9em;';
-		});
 
 		containerEl.createEl('h2', { text: '排班设置' });
 

@@ -35,7 +35,7 @@ export const DEFAULT_SETTINGS: OZCalendarPluginSettings = {
 	openViewOnStart: true,
 	calendarType: 'ISO 8601',
 	dateSource: 'yaml',
-	yamlKey: 'created',
+	yamlKey: 'Date',
 	dateFormat: 'YYYY-MM-DD hh:mm:ss',
 	defaultFolder: '/',
 	defaultFileNamePrefix: 'YYYY-MM-DD',

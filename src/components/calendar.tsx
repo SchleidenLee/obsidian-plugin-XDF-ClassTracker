@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import useForceUpdate from 'hooks/forceUpdate';
 import { DayChangeCommandAction } from 'types';
 import { CreateNoteModal } from 'modal';
+import { BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 
 export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 	const { plugin } = params;
@@ -129,8 +130,21 @@ export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 
 	const fixedCalendarClass = plugin.settings.fixedCalendar ? 'fixed' : '';
 
+	const prevMonth = () => setActiveStartDate(dayjs(activeStartDate).subtract(1, 'month').toDate());
+	const nextMonth = () => setActiveStartDate(dayjs(activeStartDate).add(1, 'month').toDate());
+
 	return (
 		<div className={'oz-calendar-plugin-view ' + fixedCalendarClass}>
+			<div className="oz-calendar-header">
+				<div className="oz-calendar-header-title">
+					<span className="oz-calendar-header-month">{dayjs(activeStartDate).format('MMMM')}</span>
+					<span className="oz-calendar-header-year">{dayjs(activeStartDate).format('YYYY')}</span>
+				</div>
+				<div className="oz-calendar-header-arrows">
+					<BsChevronLeft size={14} aria-label="Previous month" onClick={prevMonth} />
+					<BsChevronRight size={14} aria-label="Next month" onClick={nextMonth} />
+				</div>
+			</div>
 			<Calendar
 				locale="en-US"
 				onChange={setSelectedDay}
@@ -144,18 +158,7 @@ export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 				calendarType={plugin.settings.calendarType}
 				showFixedNumberOfWeeks={plugin.settings.fixedCalendar}
 				activeStartDate={activeStartDate}
-				onActiveStartDateChange={(props) => {
-					if (props.action === 'next') {
-						setActiveStartDate(dayjs(activeStartDate).add(1, 'month').toDate());
-					} else if (props.action === 'next2') {
-						setActiveStartDate(dayjs(activeStartDate).add(12, 'month').toDate());
-					} else if (props.action === 'prev') {
-						setActiveStartDate(dayjs(activeStartDate).add(-1, 'month').toDate());
-					} else if (props.action === 'prev2') {
-						setActiveStartDate(dayjs(activeStartDate).add(-12, 'month').toDate());
-					}
-				}}
-				formatMonthYear={(locale, date) => dayjs(date).format('MMM YYYY')}
+				formatMonthYear={(locale, date) => dayjs(date).format('MMMM YYYY')}
 			/>
 			<>
 				<div id="oz-calendar-divider"></div>

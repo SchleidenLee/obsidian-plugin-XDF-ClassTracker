@@ -91,14 +91,56 @@ settings:
 }
 
 .oz-calendar-plugin-view .react-calendar__navigation {
+	display: none;
+}
+
+/* Custom calendar header (replicating obsidian-calendar-ui) */
+.oz-calendar-header {
 	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 4px 8px;
+}
+
+.oz-calendar-header-title {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	font-family: var(--font-interface);
+	color: var(--text-normal);
+}
+
+.oz-calendar-header-month {
+	font-size: 1.4em;
+	font-weight: 500;
+	line-height: 1.2;
+}
+
+.oz-calendar-header-year {
+	font-size: 1em;
+	font-weight: 400;
+	color: var(--text-muted);
+}
+
+.oz-calendar-header-arrows {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.oz-calendar-header-arrows svg:hover {
+	color: var(--text-normal);
 }
 
 .oz-calendar-plugin-view .react-calendar__month-view__weekdays {
 	text-align: center;
 	text-transform: uppercase;
-	font-weight: bold;
+	font-weight: 500;
 	font-size: 0.75em;
+	color: var(--text-muted);
+	font-family: var(--font-interface);
 }
 
 .oz-calendar-plugin-view .react-calendar__month-view__weekdays__weekday {
@@ -135,15 +177,8 @@ settings:
 	box-shadow: none !important;
 }
 
-.oz-calendar-plugin-view button.react-calendar__navigation__label {
-	color: var(--oz-calendar-header-date-color);
-	font-size: 1.3em;
-	font-weight: 700;
-	font-family: 'Inter', system-ui, -apple-system, sans-serif;
-}
-
 .oz-calendar-plugin-view .react-calendar__month-view__days__day abbr {
-	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+	font-family: var(--font-interface);
 }
 
 .oz-calendar-plugin-view .dots-wrapper {
@@ -205,7 +240,7 @@ settings:
 	vertical-align: top;
 	font-size: 1.1em;
 	font-weight: 700;
-	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+	font-family: var(--font-interface);
 	color: var(--oz-calendar-header-date-color);
 	cursor: pointer;
 }
@@ -347,7 +382,7 @@ settings:
 
 .oz-calendar-note-name {
 	vertical-align: middle;
-	font-family: 'Inter', system-ui, -apple-system, sans-serif;
+	font-family: var(--font-interface);
 }
 
 /* Calendar time slot blocks */

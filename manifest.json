@@ -1,7 +1,7 @@
 {
 	"id": "xdf-classtracker",
 	"name": "XDF ClassTracker",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"minAppVersion": "0.15.0",
 	"description": "XDF 课程追踪日历：通过 YAML 日期字段在日历视图中标记课节时段和反馈状态",
 	"author": "Schleiden",

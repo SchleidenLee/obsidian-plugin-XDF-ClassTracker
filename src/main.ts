@@ -1,11 +1,10 @@
-import { CachedMetadata, Menu, Plugin, TAbstractFile, TFile, addIcon } from 'obsidian';
+import { CachedMetadata, Plugin, TAbstractFile, TFile, addIcon } from 'obsidian';
 import { OZCalendarView, VIEW_TYPE } from 'view';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { DayChangeCommandAction, OZCalendarDaysMap, fileToOZItem, ScheduleData } from 'types';
 import { OZCAL_ICON } from './util/icons';
 import { OZCalendarPluginSettings, DEFAULT_SETTINGS, OZCalendarPluginSettingsTab } from './settings/settings';
-import { CreateNoteModal } from 'modal';
 import { ScheduleModal } from './ScheduleModal';
 
 export default class OZCalendarPlugin extends Plugin {
@@ -18,7 +17,6 @@ export default class OZCalendarPlugin extends Plugin {
 	EVENT_TYPES = {
 		forceUpdate: 'ozCalendarForceUpdate',
 		changeDate: 'ozCalendarChangeDate',
-		createNote: 'ozCalendarCreateNote',
 	};
 
 	dayMonthSelectorQuery = '.oz-calendar-plugin-view .react-calendar__tile.react-calendar__month-view__days__day';
@@ -59,9 +57,6 @@ export default class OZCalendarPlugin extends Plugin {
 		this.registerEvent(this.app.vault.on('rename', this.handleRename));
 		this.registerEvent(this.app.vault.on('delete', this.handleDelete));
 		this.registerEvent(this.app.vault.on('create', this.handleCreate));
-
-		// Add Event Handler for Custom Note Creation
-		document.on('contextmenu', this.dayMonthSelectorQuery, this.handleMonthDayContextMenu);
 
 		this.addCommand({
 			id: 'oz-calendar-next-day',
@@ -106,18 +101,6 @@ export default class OZCalendarPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'oz-calendar-new-note',
-			name: 'Create a New Note',
-			callback: () => {
-				window.dispatchEvent(
-					new CustomEvent(this.EVENT_TYPES.createNote, {
-						detail: {},
-					})
-				);
-			},
-		});
-
-		this.addCommand({
 			id: 'oz-calendar-open-leaf',
 			name: 'Open OZ Calendar',
 			callback: () => {
@@ -127,8 +110,6 @@ export default class OZCalendarPlugin extends Plugin {
 	}
 
 	onunload() {
-		// Remove Event Handler for Custom Note Creation
-		document.off('contextmenu', this.dayMonthSelectorQuery, this.handleMonthDayContextMenu);
 	}
 
 	async loadSettings() {
@@ -513,26 +494,5 @@ export default class OZCalendarPlugin extends Plugin {
 			}
 		}
 		return OZCalendarDays;
-	};
-
-	handleMonthDayContextMenu = (ev: MouseEvent, delegateTarget: HTMLElement) => {
-		let abbrItem = delegateTarget.querySelector('abbr[aria-label]');
-		if (abbrItem) {
-			let destDate = abbrItem.getAttr('aria-label');
-			if (destDate && destDate.length > 0) {
-				let dayjsDate = dayjs(destDate, 'MMMM D, YYYY');
-				let menu = new Menu();
-				menu.addItem((menuItem) => {
-					menuItem
-						.setTitle('为这天创建笔记')
-						.setIcon('create-new')
-						.onClick((evt) => {
-							let modal = new CreateNoteModal(this, dayjsDate.toDate());
-							modal.open();
-						});
-				});
-				menu.showAtPosition({ x: ev.pageX, y: ev.pageY });
-			}
-		}
 	};
 }

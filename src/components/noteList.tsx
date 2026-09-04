@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
-import { BsArrowRight, BsArrowLeft } from 'react-icons/bs';
 import { HiOutlineDocumentText } from 'react-icons/hi';
 import { RiPhoneFindLine } from 'react-icons/ri';
-import { MdToday } from 'react-icons/md';
+
 import dayjs from 'dayjs';
 import OZCalendarPlugin from 'main';
 import { isMouseEvent, openFile } from '../util/utils';
@@ -20,11 +19,6 @@ interface NoteListComponentParams {
 
 export default function NoteListComponent(params: NoteListComponentParams) {
 	const { setSelectedDay, selectedDay, plugin, setActiveStartDate, forceValue } = params;
-
-	const setNewSelectedDay = (nrChange: number) => {
-		let newDate = dayjs(selectedDay).add(nrChange, 'day');
-		setSelectedDay(newDate.toDate());
-	};
 
 	const openFilePath = (e: React.MouseEvent<HTMLDivElement, MouseEvent>, filePath: string) => {
 		let abstractFile = plugin.app.vault.getAbstractFileByPath(filePath);
@@ -56,18 +50,39 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 		return sortedList;
 	}, [selectedDay, forceValue]);
 
-	const monthlyNoteCount = useMemo(() => {
-		const currentMonth = dayjs(selectedDay).format('YYYY-MM');
-		let count = 0;
+	// Statistics
+	const stats = useMemo(() => {
+		const today = dayjs().startOf('day');
+		const currentMonth = today.format('YYYY-MM');
+		let monthlyTotal = 0;
+		let pendingToday = 0;
+		let overdue = 0;
+
 		for (const dateKey in plugin.OZCALENDARDAYS_STATE) {
+			const items = plugin.OZCALENDARDAYS_STATE[dateKey].filter((item) => item.type === 'note');
+			const noteDate = dayjs(dateKey);
+
+			// Monthly total
 			if (dateKey.startsWith(currentMonth)) {
-				count += plugin.OZCALENDARDAYS_STATE[dateKey].filter(
-					(item) => item.type === 'note'
-				).length;
+				monthlyTotal += items.length;
 			}
+
+			// Pending and Overdue calculation
+			items.forEach((item) => {
+				const note = item as OZNote;
+				if (note.needSendFeedback && !note.feedbackTaskDone) {
+					// Deadline: Course Date + 1 Day + 24:00
+					const deadline = noteDate.add(1, 'day').endOf('day');
+					if (today.isAfter(deadline)) {
+						overdue++;
+					} else if (noteDate.isSame(today, 'day')) {
+						pendingToday++;
+					}
+				}
+			});
 		}
-		return count;
-	}, [selectedDay, forceValue]);
+		return { monthlyTotal, pendingToday, overdue };
+	}, [plugin.OZCALENDARDAYS_STATE, forceValue]);
 
 	const triggerFileContextMenu = (e: React.MouseEvent | React.TouchEvent, filePath: string) => {
 		let abstractFile = plugin.app.vault.getAbstractFileByPath(filePath);
@@ -85,33 +100,22 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 
 	return (
 		<>
-			<div className="oz-calendar-notelist-header-container">
-				<div className="oz-calendar-nav-action-left">
-					<BsArrowLeft size={22} aria-label="Go to previous day" onClick={() => setNewSelectedDay(-1)} />
+			<div className="oz-calendar-status-bar">
+				<div className="oz-status-item">
+					<span className="oz-status-label">Total</span>
+					<span className="oz-status-value">{stats.monthlyTotal}</span>
 				</div>
-				<div
-					className="oz-calendar-nav-action-middle"
-					aria-label="Show active date on calendar"
-					onClick={() => setActiveStartDate(selectedDay)}>
-					{dayjs(selectedDay).format('DD MMM YYYY')}
+				<div className="oz-status-divider"></div>
+				<div className="oz-status-item">
+					<span className="oz-status-label">Pending</span>
+					<span className="oz-status-value oz-status-pending">{stats.pendingToday}</span>
 				</div>
-				<div className="oz-calendar-nav-action-right">
-					<BsArrowRight size={22} aria-label="Go to next day" onClick={() => setNewSelectedDay(1)} />
+				<div className="oz-status-divider"></div>
+				<div className="oz-status-item">
+					<span className="oz-status-label">Overdue</span>
+					<span className="oz-status-value oz-status-overdue">{stats.overdue}</span>
 				</div>
-				<div className="oz-calendar-nav-action-today">
-					<MdToday
-						size={20}
-						aria-label="Set today as selected day"
-						onClick={() => {
-							setActiveStartDate(new Date());
-							setSelectedDay(new Date());
-						}}
-					/>
-				</div>
-				<div className="oz-calendar-monthly-count">
-					<span>当月总课次</span>
-					<span className="oz-calendar-count-number">{monthlyNoteCount}</span>
-				</div>
+				<div className="oz-status-spacer"></div>
 			</div>
 			<div className="oz-calendar-notelist-container">
 				{selectedDayNotes.length === 0 && (
@@ -121,6 +125,11 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 					</div>
 				)}
 				{selectedDayNotes.map((ozNote) => {
+					const isOverdue =
+						ozNote.needSendFeedback &&
+						!ozNote.feedbackTaskDone &&
+						dayjs().isAfter(dayjs(selectedDay).add(1, 'day').endOf('day'));
+
 					return (
 						<div
 							className="oz-calendar-note-line"
@@ -139,6 +148,8 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 									style={{
 										backgroundColor: ozNote.feedbackTaskDone
 											? plugin.settings.slotDoneColor
+											: isOverdue
+											? plugin.settings.slotOverdueColor
 											: plugin.settings.slotPendingColor,
 									}}
 								/>

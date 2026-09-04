@@ -1,6 +1,5 @@
 import OZCalendarPlugin from 'main';
 import { PluginSettingTab, App, Setting } from 'obsidian';
-import { FolderSuggest } from 'settings/suggestor';
 
 export type OpenFileBehaviourType = 'new-tab' | 'obsidian-default';
 export type DateSourceOption = 'filename' | 'yaml';
@@ -12,15 +11,13 @@ export interface OZCalendarPluginSettings {
 	dateSource: DateSourceOption;
 	yamlKey: string;
 	dateFormat: string;
-	defaultFolder: string;
-	defaultFileNamePrefix: string;
 	fixedCalendar: boolean;
-	showDestinationFolderDuringCreate: boolean;
 	openFileBehaviour: OpenFileBehaviourType;
 	showWeekNumbers: boolean;
 	timeSlots: string[];
 	slotPendingColor: string;
 	slotDoneColor: string;
+	slotOverdueColor: string;
 }
 
 export const DEFAULT_SETTINGS: OZCalendarPluginSettings = {
@@ -29,15 +26,13 @@ export const DEFAULT_SETTINGS: OZCalendarPluginSettings = {
 	dateSource: 'yaml',
 	yamlKey: 'Date',
 	dateFormat: 'YYYY-MM-DD hh:mm:ss',
-	defaultFolder: '/',
-	defaultFileNamePrefix: 'YYYY-MM-DD',
 	fixedCalendar: true,
-	showDestinationFolderDuringCreate: true,
 	openFileBehaviour: 'new-tab',
 	showWeekNumbers: false,
 	timeSlots: ['10:00', '12:20', '15:30', '17:50', '20:10'],
 	slotPendingColor: '#c4a35a',
 	slotDoneColor: '#7a9e7e',
+	slotOverdueColor: '#e25d5d',
 };
 
 export class OZCalendarPluginSettingsTab extends PluginSettingTab {
@@ -117,10 +112,13 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 		const pendingPreview = colorPreviewDiv.createDiv();
 		pendingPreview.style.cssText = `width: 24px; height: 16px; border-radius: 3px; background: ${this.plugin.settings.slotPendingColor};`;
 
+		const overduePreview = colorPreviewDiv.createDiv();
+		overduePreview.style.cssText = `width: 24px; height: 16px; border-radius: 3px; background: ${this.plugin.settings.slotOverdueColor};`;
+
 		const donePreview = colorPreviewDiv.createDiv();
 		donePreview.style.cssText = `width: 24px; height: 16px; border-radius: 3px; background: ${this.plugin.settings.slotDoneColor};`;
 
-		const previewLabel = colorPreviewDiv.createEl('span', { text: '待提交 / 已完成' });
+		const previewLabel = colorPreviewDiv.createEl('span', { text: '待提交 / 已逾期 / 已完成' });
 		previewLabel.style.cssText = 'font-size: 0.85em; color: var(--text-muted);';
 
 		const renderColorPicker = (
@@ -172,6 +170,23 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 			doneColorOptions,
 			(color: string) => {
 				this.plugin.settings.slotDoneColor = color;
+				this.plugin.saveSettings();
+				this.plugin.calendarForceUpdate();
+			}
+		);
+
+		const overdueColorOptions = [
+			'#e25d5d', '#d94a4a', '#c73e3e', '#f06666', '#ff7b7b',
+			'#ff5c5c', '#ff4d4d', '#ff6b6b', '#f55e5e', '#e65656',
+		];
+
+		renderColorPicker(
+			'已逾期颜色',
+			'反馈超过截止时间未提交时的警示色块',
+			this.plugin.settings.slotOverdueColor,
+			overdueColorOptions,
+			(color: string) => {
+				this.plugin.settings.slotOverdueColor = color;
 				this.plugin.saveSettings();
 				this.plugin.calendarForceUpdate();
 			}
@@ -329,41 +344,6 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 				button.setButtonText('重新加载插件');
 				button.onClick(() => {
 					this.plugin.reloadPlugin();
-				});
-			});
-
-		containerEl.createEl('h2', { text: '新建笔记设置' });
-
-		new Setting(containerEl)
-			.setName('默认文件夹')
-			.setDesc('选择新建笔记的默认保存位置')
-			.addSearch((cb) => {
-				new FolderSuggest(cb.inputEl);
-				cb.setPlaceholder('例如: folder1/folder2')
-					.setValue(this.plugin.settings.defaultFolder)
-					.onChange((new_folder) => {
-						this.plugin.settings.defaultFolder = new_folder;
-						this.plugin.saveSettings();
-					});
-			});
-
-		new Setting(containerEl)
-			.setName('文件名前缀日期格式')
-			.setDesc('新建笔记时，文件名前缀的日期格式。留空则不添加前缀')
-			.addText((text) => {
-				text.setValue(this.plugin.settings.defaultFileNamePrefix).onChange((newValue) => {
-					this.plugin.settings.defaultFileNamePrefix = newValue;
-					this.plugin.saveSettings();
-				});
-			});
-
-		new Setting(containerEl)
-			.setName('新建时显示文件夹选择')
-			.setDesc('关闭后，新建笔记时将不会弹出文件夹选择窗口，直接保存到上方设置的默认文件夹')
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.showDestinationFolderDuringCreate).onChange((newValue) => {
-					this.plugin.settings.showDestinationFolderDuringCreate = newValue;
-					this.plugin.saveSettings();
 				});
 			});
 

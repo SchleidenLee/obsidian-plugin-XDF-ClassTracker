@@ -53,12 +53,14 @@ export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 			const dateString = dayjs(date).format('YYYY-MM-DD');
 			const items = dateString in plugin.OZCALENDARDAYS_STATE ? plugin.OZCALENDARDAYS_STATE[dateString] : [];
 
-			const slotMap: { [slot: string]: { hasClass: boolean; feedbackPending: boolean } } = {};
+			const slotMap: { [slot: string]: { hasClass: boolean; feedbackPending: boolean; isOverdue: boolean } } = {};
 			items.forEach((item) => {
 				if (item.type === 'note' && item.time && timeSlots.includes(item.time)) {
+					const isOverdue = !!(item as any).needSendFeedback && !(item as any).feedbackTaskDone && dayjs().isAfter(dayjs(dateString).add(1, 'day').endOf('day'));
 					slotMap[item.time] = {
 						hasClass: true,
 						feedbackPending: !!(item as any).needSendFeedback && !(item as any).feedbackTaskDone,
+						isOverdue,
 					};
 				}
 			});
@@ -70,12 +72,21 @@ export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 					{timeSlots.map((slot) => {
 						const slotData = slotMap[slot];
 						if (!slotData || !slotData.hasClass) return <div key={slot} className="oz-slot-empty" />;
-						const slotClass = slotData.feedbackPending
-							? 'oz-slot-filled oz-slot-pending'
-							: 'oz-slot-filled oz-slot-done';
-						const bgColor = slotData.feedbackPending
-							? plugin.settings.slotPendingColor
-							: plugin.settings.slotDoneColor;
+						
+						let slotClass = '';
+						let bgColor = '';
+						
+						if (slotData.isOverdue) {
+							slotClass = 'oz-slot-filled oz-slot-overdue';
+							bgColor = plugin.settings.slotOverdueColor;
+						} else if (slotData.feedbackPending) {
+							slotClass = 'oz-slot-filled oz-slot-pending';
+							bgColor = plugin.settings.slotPendingColor;
+						} else {
+							slotClass = 'oz-slot-filled oz-slot-done';
+							bgColor = plugin.settings.slotDoneColor;
+						}
+						
 						return (
 							<div key={slot} className={slotClass} style={{ backgroundColor: bgColor }} />
 						);

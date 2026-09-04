@@ -242,36 +242,6 @@ export default class OZCalendarPlugin extends Plugin {
 	};
 
 	/**
-	 * Scans the file provided for users date key and adds to the plugin state
-	 * @param file
-	 * @returns boolean (if any change happened, true)
-	 */
-	scanTFileDate = async (file: TFile): Promise<boolean> => {
-		let cache = this.app.metadataCache.getCache(file.path);
-		let changeFlag = false;
-		if (cache && cache.frontmatter) {
-			let fm = cache.frontmatter;
-			for (let k of Object.keys(cache.frontmatter)) {
-				if (k === this.settings.yamlKey) {
-					let fmValue = String(fm[k]);
-					let parsedDayISOString = dayjs(fmValue, this.settings.dateFormat).format('YYYY-MM-DD');
-					let time = this.extractTimeFromDate(fmValue);
-					const feedbackInfo = await this.extractFeedbackInfo(file);
-					this.addFilePathToState(
-						parsedDayISOString,
-						file,
-						time,
-						feedbackInfo.needSendFeedback,
-						feedbackInfo.feedbackTaskDone
-					);
-					changeFlag = true;
-				}
-			}
-		}
-		return changeFlag;
-	};
-
-	/**
 	 * Use this function to force update the calendar and file list view
 	 */
 	calendarForceUpdate = () => {
@@ -461,9 +431,9 @@ export default class OZCalendarPlugin extends Plugin {
 
 	reloadPlugin = () => {
 		// @ts-ignore
-		this.app.plugins.disablePlugin('oz-calendar');
+		this.app.plugins.disablePlugin(this.manifest.id);
 		// @ts-ignore
-		this.app.plugins.enablePlugin('oz-calendar');
+		this.app.plugins.enablePlugin(this.manifest.id);
 	};
 
 	getNotesWithDates = async (): Promise<OZCalendarDaysMap> => {
@@ -554,7 +524,7 @@ export default class OZCalendarPlugin extends Plugin {
 				let menu = new Menu();
 				menu.addItem((menuItem) => {
 					menuItem
-						.setTitle('Create a note for this date')
+						.setTitle('为这天创建笔记')
 						.setIcon('create-new')
 						.onClick((evt) => {
 							let modal = new CreateNoteModal(this, dayjsDate.toDate());

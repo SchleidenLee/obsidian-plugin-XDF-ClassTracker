@@ -5,7 +5,6 @@ import NoteListComponent from './noteList';
 import dayjs from 'dayjs';
 import useForceUpdate from 'hooks/forceUpdate';
 import { DayChangeCommandAction } from 'types';
-import { CreateNoteModal } from 'modal';
 import { BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 
 export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
@@ -19,33 +18,11 @@ export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 	useEffect(() => {
 		window.addEventListener(plugin.EVENT_TYPES.forceUpdate, forceUpdate);
 		window.addEventListener(plugin.EVENT_TYPES.changeDate, changeDate);
-		window.addEventListener(plugin.EVENT_TYPES.createNote, createNote);
 		return () => {
 			window.removeEventListener(plugin.EVENT_TYPES.forceUpdate, forceUpdate);
 			window.removeEventListener(plugin.EVENT_TYPES.changeDate, changeDate);
-			window.removeEventListener(plugin.EVENT_TYPES.createNote, createNote);
 		};
 	}, []);
-
-	const createNote = () => {
-		let currentSelectedDay: Date = selectedDay;
-		let dateNow: Date = new Date();
-		setSelectedDay((selectedDay) => {
-			currentSelectedDay = selectedDay;
-			return selectedDay;
-		});
-		// Add now time details to the existing date if current date
-		if (plugin.settings.newNoteDate === 'active-date') {
-			currentSelectedDay.setHours(dateNow.getHours());
-			currentSelectedDay.setMinutes(dateNow.getMinutes());
-			currentSelectedDay.setMilliseconds(dateNow.getMilliseconds());
-		}
-		let newFileModal = new CreateNoteModal(
-			plugin,
-			plugin.settings.newNoteDate === 'current-date' ? dateNow : currentSelectedDay
-		);
-		newFileModal.open();
-	};
 
 	const changeDate = (e: CustomEvent) => {
 		let action = e.detail.action as DayChangeCommandAction;
@@ -163,13 +140,12 @@ export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 			<>
 				<div id="oz-calendar-divider"></div>
 				<NoteListComponent
-					selectedDay={selectedDay}
-					setSelectedDay={setSelectedDay}
-					setActiveStartDate={setActiveStartDate}
-					plugin={plugin}
-					forceValue={forceValue}
-					createNote={createNote}
-				/>
+				selectedDay={selectedDay}
+				setSelectedDay={setSelectedDay}
+				setActiveStartDate={setActiveStartDate}
+				plugin={plugin}
+				forceValue={forceValue}
+			/>
 			</>
 		</div>
 	);

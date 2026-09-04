@@ -2,12 +2,9 @@ import OZCalendarPlugin from 'main';
 import { PluginSettingTab, App, Setting } from 'obsidian';
 import { FolderSuggest } from 'settings/suggestor';
 
-export type OpenFileBehaviourType = 'new-tab' | 'new-tab-group' | 'current-tab' | 'obsidian-default';
-export type SortingOption = 'name' | 'name-rev';
+export type OpenFileBehaviourType = 'new-tab' | 'obsidian-default';
 export type DateSourceOption = 'filename' | 'yaml';
-export type NewNoteDateType = 'current-date' | 'active-date';
 export type CalendarType = 'US' | 'ISO 8601';
-export type OverflowBehaviour = 'scroll' | 'hide' | 'next-line';
 
 export interface OZCalendarPluginSettings {
 	openViewOnStart: boolean;
@@ -19,12 +16,7 @@ export interface OZCalendarPluginSettings {
 	defaultFileNamePrefix: string;
 	fixedCalendar: boolean;
 	showDestinationFolderDuringCreate: boolean;
-	allowSlashhDuringCreate: boolean;
 	openFileBehaviour: OpenFileBehaviourType;
-	sortingOption: SortingOption;
-	newNoteDate: NewNoteDateType;
-	newNoteCancelButtonReverse: boolean;
-	fileNameOverflowBehaviour: OverflowBehaviour;
 	showWeekNumbers: boolean;
 	timeSlots: string[];
 	slotPendingColor: string;
@@ -41,12 +33,7 @@ export const DEFAULT_SETTINGS: OZCalendarPluginSettings = {
 	defaultFileNamePrefix: 'YYYY-MM-DD',
 	fixedCalendar: true,
 	showDestinationFolderDuringCreate: true,
-	allowSlashhDuringCreate: false,
-	openFileBehaviour: 'current-tab',
-	sortingOption: 'name',
-	newNoteDate: 'current-date',
-	newNoteCancelButtonReverse: false,
-	fileNameOverflowBehaviour: 'hide',
+	openFileBehaviour: 'new-tab',
 	showWeekNumbers: false,
 	timeSlots: ['10:00', '12:20', '15:30', '17:50', '20:10'],
 	slotPendingColor: '#c4a35a',
@@ -273,27 +260,10 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 				dropdown
 					.addOption('obsidian-default', 'Obsidian 默认行为')
 					.addOption('new-tab', '在新标签页打开')
-					.addOption('new-tab-group', '在新标签组打开')
-					.addOption('current-tab', '在当前标签页打开')
 					.setValue(this.plugin.settings.openFileBehaviour)
 					.onChange((newValue: OpenFileBehaviourType) => {
 						this.plugin.settings.openFileBehaviour = newValue;
 						this.plugin.saveSettings();
-					});
-			});
-
-		new Setting(containerEl)
-			.setName('笔记列表排序')
-			.setDesc('选择笔记列表的排序方式')
-			.addDropdown((dropdown) => {
-				dropdown
-					.addOption('name', '文件名（A-Z）')
-					.addOption('name-rev', '文件名（Z-A）')
-					.setValue(this.plugin.settings.sortingOption)
-					.onChange((newValue: SortingOption) => {
-						this.plugin.settings.sortingOption = newValue;
-						this.plugin.saveSettings();
-						this.plugin.calendarForceUpdate();
 					});
 			});
 
@@ -364,25 +334,6 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', { text: '新建笔记设置' });
 
-		containerEl.createEl('p', {
-			text: '如果日期来源设为 YAML，插件将使用上述日期格式自动为新笔记添加 YAML 键名和日期。如果选择文件名作为日期来源，则不会自动生成 YAML。',
-			cls: 'setting-item-description',
-		});
-
-		new Setting(containerEl)
-			.setName('新建笔记日期')
-			.setDesc('定义新建笔记时使用的日期：当前选中的日期 或 今天')
-			.addDropdown((dropdown) => {
-				dropdown
-					.addOption('active-date', '当前选中日期')
-					.addOption('current-date', '今天')
-					.setValue(this.plugin.settings.newNoteDate)
-					.onChange((newValue: NewNoteDateType) => {
-						this.plugin.settings.newNoteDate = newValue;
-						this.plugin.saveSettings();
-					});
-			});
-
 		new Setting(containerEl)
 			.setName('默认文件夹')
 			.setDesc('选择新建笔记的默认保存位置')
@@ -398,7 +349,7 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('文件名前缀日期格式')
-			.setDesc('设置使用 + 按钮新建笔记时，文件名前缀的日期格式。留空则不添加前缀')
+			.setDesc('新建笔记时，文件名前缀的日期格式。留空则不添加前缀')
 			.addText((text) => {
 				text.setValue(this.plugin.settings.defaultFileNamePrefix).onChange((newValue) => {
 					this.plugin.settings.defaultFileNamePrefix = newValue;
@@ -416,32 +367,7 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 				});
 			});
 
-		new Setting(containerEl)
-			.setName('允许文件名中使用斜杠')
-			.setDesc('开启后，文件名中的斜杠 (/) 将被识别为子文件夹。例如输入 Folder1/File1，将创建 Folder1 文件夹并将 File1 保存在其中')
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.allowSlashhDuringCreate).onChange((newValue) => {
-					this.plugin.settings.allowSlashhDuringCreate = newValue;
-					this.plugin.saveSettings();
-				});
-			});
-
-		new Setting(containerEl)
-			.setName('反转取消和确认按钮')
-			.setDesc('开启后，新建笔记弹窗中的取消和确认按钮位置将互换')
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.newNoteCancelButtonReverse).onChange((newValue) => {
-					this.plugin.settings.newNoteCancelButtonReverse = newValue;
-					this.plugin.saveSettings();
-				});
-			});
-
 		containerEl.createEl('h2', { text: '外观设置' });
-
-		containerEl.createEl('p', {
-			text: '大部分外观设置可通过安装「Style Settings」插件进行调整。下方列出的是 Style Settings 插件无法覆盖的样式选项。',
-			cls: 'setting-item-description',
-		});
 
 		new Setting(containerEl)
 			.setName('固定日历高度')
@@ -452,22 +378,6 @@ export class OZCalendarPluginSettingsTab extends PluginSettingTab {
 					this.plugin.saveSettings();
 					this.plugin.calendarForceUpdate();
 				});
-			});
-
-		new Setting(containerEl)
-			.setName('文件名过长时的行为')
-			.setDesc('当文件名超出显示宽度时的处理方式')
-			.addDropdown((dropdown) => {
-				dropdown
-					.addOption('hide', '隐藏超出部分')
-					.addOption('scroll', '水平滚动显示')
-					.addOption('next-line', '换行显示')
-					.setValue(this.plugin.settings.fileNameOverflowBehaviour)
-					.onChange((newValue: OverflowBehaviour) => {
-						this.plugin.settings.fileNameOverflowBehaviour = newValue;
-						this.plugin.saveSettings();
-						this.plugin.calendarForceUpdate();
-					});
 			});
 
 		containerEl.createEl('h2', { text: '排班设置' });

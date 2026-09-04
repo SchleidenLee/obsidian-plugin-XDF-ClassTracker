@@ -213,17 +213,35 @@ settings:
 	flex: 1;
 }
 
-.oz-calendar-nav-action-plus {
+.oz-calendar-nav-action-today {
 	width: 10%;
 	display: inline-block;
 	color: var(--text-muted);
 	vertical-align: top;
 	padding-top: 2px;
+	text-align: center;
 }
 
-.oz-calendar-nav-action-plus svg:hover {
+.oz-calendar-nav-action-today svg:hover {
 	cursor: pointer;
 	opacity: 0.6;
+}
+
+.oz-calendar-monthly-count {
+	display: inline-block;
+	width: 25%;
+	text-align: right;
+	font-size: 0.9em;
+	color: var(--text-muted);
+	vertical-align: top;
+	padding-top: 4px;
+	padding-right: 8px;
+}
+
+.oz-calendar-count-number {
+	font-weight: 700;
+	color: var(--text-normal);
+	margin-left: 4px;
 }
 
 .oz-calendar-nav-action-left {
@@ -355,16 +373,7 @@ settings:
 	color: var(--text-muted);
 }
 
-.oz-calendar-overflow-scroll {
-	overflow: scroll;
-	white-space: nowrap;
-}
-
-.oz-calendar-overflow-hide {
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
-}
+.oz-calendar-modal-inputel {
 
 /* Time stamp display for notes */
 .oz-calendar-note-time {

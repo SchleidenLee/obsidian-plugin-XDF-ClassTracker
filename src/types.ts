@@ -9,13 +9,7 @@ export type OZNote = {
 	feedbackTaskDone?: boolean;
 };
 
-export type OZReminder = {
-	type: 'task' | 'periodic';
-	displayName: string;
-	date: string;
-};
-
-type OZItem = OZNote | OZReminder;
+type OZItem = OZNote;
 
 export interface OZCalendarDaysMap {
 	[key: string]: OZItem[];

@@ -48,11 +48,10 @@ export class CreateNoteModal extends Modal {
 		// Create - Cancel Buttons
 		const createButton = contentEl.createEl('button', {
 			text: 'Create Note',
-			cls: this.plugin.settings.newNoteCancelButtonReverse ? 'oz-calendar-modal-float-right' : '',
 		});
 		const cancelButton = contentEl.createEl('button', {
 			text: 'Cancel',
-			cls: this.plugin.settings.newNoteCancelButtonReverse ? '' : 'oz-calendar-modal-float-right',
+			cls: 'oz-calendar-modal-float-right',
 		});
 		cancelButton.addEventListener('click', () => {
 			thisModal.close();
@@ -63,11 +62,6 @@ export class CreateNoteModal extends Modal {
 
 			if (newFileName === '') {
 				new Notice('You didnt provide file name');
-				return;
-			}
-
-			if (newFileName.includes('/') && !this.plugin.settings.allowSlashhDuringCreate) {
-				new Notice('You can not have a slash (/) in file name');
 				return;
 			}
 

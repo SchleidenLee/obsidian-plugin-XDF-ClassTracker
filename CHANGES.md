@@ -195,7 +195,25 @@
 3. **新建笔记弹窗仍为英文**（`modal.ts` 的 "Create Note"、"Cancel" 等文案未中文化）
 4. **排班编辑器 weekday 为英文**（Sun/Mon/... 应改为中文）
 
-## 七、diff 参考
+## 七、v1.0.2 功能精简
+
+| 改动项 | 说明 | 涉及文件 |
+|--------|------|----------|
+| 删除 `OZReminder` 类型 | 从未使用的占位代码 | `types.ts` |
+| 删除 `extractFileName` | 冗余函数，`TFile.basename` 已替代 | `noteList.tsx` |
+| 删除 `scanTFileDate` | 定义但未调用的死代码 | `main.ts` |
+| 简化 `openFileBehaviour` | 只保留 `new-tab` 和 `obsidian-default`，默认 `new-tab` | `settings.ts`, `noteList.tsx`, `util/utils.ts` |
+| 删除 `sortingOption` 设置 | 排序逻辑硬编码为时间升序 | `settings.ts` |
+| 删除 `newNoteCancelButtonReverse` | 纯装饰性设置 | `settings.ts`, `modal.ts` |
+| 删除 `allowSlashhDuringCreate` | 文件名斜杠当子文件夹，几乎不用 | `settings.ts`, `modal.ts` |
+| 删除 `fileNameOverflowBehaviour` | `next-line` 选项无效，其他场景少用 | `settings.ts`, `styles.css` |
+| 删除笔记列表 `+` 按钮 | 改为「当月总课次」统计 | `noteList.tsx`, `styles.css` |
+| 删除 `createNote` 弹窗逻辑 | 保留右键「为这天创建笔记」功能 | `calendar.tsx` |
+| 汉化右键菜单 | `Create a note for this date` → `为这天创建笔记` | `main.ts` |
+| 修复 `reloadPlugin` | 硬编码插件名 `'oz-calendar'` → `this.manifest.id` | `main.ts` |
+| 输出目录改为 `dist/` | 统一项目构建规范 | `esbuild.config.mjs`, `.gitignore` |
+
+## 八、diff 参考
 
 以下命令可在本地快速查看代码差异：
 

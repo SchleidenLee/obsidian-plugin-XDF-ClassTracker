@@ -9,11 +9,9 @@ export const openFile = (params: {
 	file: TFile;
 	plugin: OZCalendarPlugin;
 	newLeaf: boolean;
-	leafBySplit?: boolean;
 }) => {
-	const { file, plugin, newLeaf, leafBySplit } = params;
+	const { file, plugin, newLeaf } = params;
 	let leaf = plugin.app.workspace.getLeaf(newLeaf);
-	if (!newLeaf && leafBySplit) leaf = plugin.app.workspace.createLeafBySplit(leaf, 'vertical');
 	plugin.app.workspace.setActiveLeaf(leaf, { focus: true });
 	leaf.openFile(file, { eState: { focus: true } });
 };

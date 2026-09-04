@@ -1,76 +1,120 @@
-# OZ Calendar Plugin
+# XDF ClassTracker
 
-If you like the see your notes on a Calendar and easily find them using a certain date, you are at the right place. This plugin is created to help users easily view notes on Calendar using any YAML key or File Name with a custom date value. You define the YAML key and Date Format to be used. Or you can simply use the file name with your custom date format. Follow the **Configure** steps depending on your choice and you are ready to go.
+新东方教师课程追踪日历 Obsidian 插件。通过 YAML 字段识别课程笔记的日期和时间，在日历视图中标记课节时段、反馈状态与排班信息，帮助教师快速掌握每日课程安排。
 
-## Sample View
+## 功能一览
 
-<img src="https://github.com/ozntel/oz-calendar/blob/master/img/OZ-Calendar-Sample-Img-01.png?raw=true" width="250px"/>
+### 课节时段可视化
+- 支持配置 **1-6 节课**时段（默认 10:00 / 12:20 / 15:30 / 17:50 / 20:10）
+- 日历格子上以彩色色块标记当天已有的课节
+- 色块颜色区分：待提交反馈（暖金色）/ 已提交（绿色），支持自定义配色
 
-## Configure
+### 反馈状态跟踪
+- 自动读取笔记 frontmatter 的 `need_send_feedback` 字段
+- 扫描正文中的 `提交反馈` checkbox（`- [x] 提交反馈` / `- [ ] 提交反馈`）
+- 笔记列表右侧显示反馈状态指示点，点击日历格子即可判断当天哪些课节已交反馈
 
-> IMPORTANT: Please make sure that you check the date formatting of the library, which is used by this plugin following [Day.js Date Format Link](https://day.js.org/docs/en/display/format).
+### 排班管理
+- 内置排班编辑器，可标记 **休息日**（绿色）和 **加班日**（橙色）
+- 休息日可在日历上直接调休查看，日历格子自动高亮
 
-### 01 YAML Option as Date Source
+### 课程笔记管理
+- 按 YAML 日期字段将笔记自动归类到日历日期
+- 笔记列表按课时时间排序（早课在前）
+- 点击日历格子或 + 按钮快速创建带 YAML 日期的新课节笔记
 
-1. Go to the plugin settings
-2. Define the **YAML** key you want to use as a date field. The default key is **created**
-3. Define the **Date Format** you are using within **YAML**. The default date format is **YYYY-MM-DD hh:mm:ss**
-4. After these changes, use **Reload Plugin** option to activate the changes in the vault.
+## 安装
 
-For the ones that don't know how to add a YAML key, see the following:
+1. 在 Obsidian 设置 → 第三方插件 中关闭安全模式
+2. 将 `dist/` 文件夹（含 `main.js`、`manifest.json`、`styles.css`）复制到你的 Vault 的 `.obsidian/plugins/xdf-classtracker/` 目录下
+3. 刷新插件列表并启用 **XDF ClassTracker**
+
+## 快速开始
+
+### 第一步：设置日期来源
+
+插件通过笔记的 frontmatter 识别课节日期。
+
+1. 打开插件设置
+2. 确认 **日期来源** 设为 `YAML 键名`
+3. 设置 **YAML 键名** 为你使用的字段（默认 `Date`）
+4. 设置 **日期格式**（默认 `YYYY-MM-DD hh:mm:ss`）
+5. 点击 **重新加载插件**
+
+在你的课程笔记 frontmatter 中添加日期：
 
 ```md
 ---
-created: 2023-03-10 09:48:22
+Date: 2026-09-01 10:00:00
+need_send_feedback: true
 ---
 ```
 
-You can use any YAML key instead of "created" and any date format value for the key.
+> `hh:mm` 部分会被自动提取为课时时间，用于课节时段排序。
 
-### 02 File Name Option as Date Source
+### 第二步：配置课节时段
 
-The default date source is the YAML Key ("created") as mentioned above. If you want to use the file name as date source that feeds the calendar:
+在设置中调整每天的课节数（1-6 节），并逐一设置每节课的开始时间。插件会在日历格子上为匹配时间段的笔记渲染色块。
 
-1. Go to the plugin settings
-2. Change Date Source from **YAML** to **File Name** since the plugin has **YAML** key as a default date source
-3. Make sure that you adjust the default date format (**Important**: The default date format has special characters that is not supported for file name like colon that needs to be adjusted for File Name option)
-4. After these changes, use **Reload Plugin** option to activate the changes in the vault.
+### 第三步：设置排班（可选）
 
-> Both YAML and File Name options can include additional characters in the file name. As long as the custom date format defined in the plugin settings is at the beginning of the YAML key or File Name, the plugin will be smart enough to parse only the beginning of the key/filename. For instance, if you have a file name '**2023-03-10 This is the file**' and your date format defined in the plugin settings is **YYYY-MM-DD**, it will be parsed just fine in the calendar.
+在设置的 **排班设置** 区域点击 **打开排班编辑器**，逐日标记休息日或加班日。日历会自动以绿色/橙色高亮对应日期。
 
-## Create File Option
+## 插件命令
 
-You can use the **Plus(+)** icon within the calendar view to add a new note with the default YAML key and date format.
+| 命令 | 说明 |
+|------|------|
+| Go to Previous Day | 跳转到前一天 |
+| Go to Next Day | 跳转到后一天 |
+| Go to Today | 跳转到今天 |
+| Create a New Note | 打开新建笔记弹窗 |
+| Open OZ Calendar | 打开日历视图 |
 
-You can define this in the plugin settings:
+可在 Obsidian 快捷键设置中为以上命令绑定快捷键。
 
--   The **Default Folder** the plugin is supposed to save the new file. The plugin also gives you an option to enable/disable destination folder selection during each note creation. The destination folder is always going to default to the one defined in the plugin settings but can be adjusted for single notes.
--   And the **File Prefix Date Format** in case you prefer your file names to start with a certain date format
--   You can right-click any date in the calendar view to create a note for a certain date
--   The plus icon is defaulted to create a note for today
+## 新建笔记
 
-## Plugin Commands
+点击日历下方的 **+** 按钮，或右键日历格子选择 "Create a note for this date"。插件会自动生成带 YAML 日期字段的 Markdown 文件。
 
-### Day Navigation
+可在设置中配置：
+- **默认文件夹**：新建笔记的保存位置
+- **文件名前缀日期格式**：文件名是否以日期开头（如 `YYYY-MM-DD`）
+- **新建时显示文件夹选择**：每次新建时是否弹出文件夹选择
 
-You can use directly **Go to Previous Day**, **Go to Next Day** and **Go to Today** commands to navigate between dates. You can also assign hotkey to these commands to change the active date easily from your keyboard.
+## 反馈工作流
 
-### New Note Creation
+典型的课节反馈流程：
 
-You can use the **Create a New Note** command to trigger the create a new note action customized for the plugin. Same as day navigation, you can assign hotkey to this command for easy keyboard navigation.
+1. 课程结束后在笔记正文中添加 checkbox：`- [ ] 提交反馈`
+2. 确保 frontmatter 包含 `need_send_feedback: true`
+3. 日历格子会显示暖金色块（待提交）
+4. 提交反馈后将 checkbox 标记为完成：`- [x] 提交反馈`
+5. 日历色块自动变为绿色
 
-## Style Settings Plugin Support
+## 自定义样式
 
-You can customize some of the calendar style settings using the **Style Settings Plugin**.
+本插件支持通过 Obsidian 社区插件 [Style Settings](https://obsidian.md/plugins?id=style-settings) 自定义部分颜色。也可在 `obsidian.css` 中覆盖以下 CSS 变量：
 
-## Contact
+```css
+.theme-light, .theme-dark {
+    --oz-calendar-weekend-color: #f76a6a;
+    --oz-calendar-selected-daycolor: var(--text-normal);
+    --oz-calendar-selected-day-background: var(--interactive-accent);
+    --oz-calendar-header-date-color: var(--interactive-accent);
+    --oz-calendar-current-day-color: #74dd58;
+    --oz-calendar-weeknr-date-color: var(--color-accent-2);
+}
+```
 
-If you have any issues or you have any suggestions, please feel free to reach me out directly using the contact page of my website [ozan.pl/contact/](https://www.ozan.pl/contact/) or directly to <me@ozan.pl>.
+## 已知限制
 
-## Support
+- 日期来源设为「文件名」时，部分功能（如反馈状态、时间排序）可能不生效
+- 插件仅在 YAML 日期来源模式下完整支持所有功能
 
-If you are enjoying the plugin then you can support my work and enthusiasm by buying me a coffee:
+## 致谢
 
-<a href='https://ko-fi.com/L3L356V6Q' target='_blank'>
-    <img height='48' style='border:0px;height:48px;' src='https://cdn.ko-fi.com/cdn/kofi1.png?v=2' border='0' alt='Buy Me a Coffee at ko-fi.com' />
-</a>
+本插件基于 [ozntel/oz-calendar](https://github.com/ozntel/oz-calendar) 二次开发。UI 头部布局参考了 [liamcain/obsidian-calendar-plugin](https://github.com/liamcain/obsidian-calendar-plugin) 的设计。
+
+## 许可证
+
+MIT

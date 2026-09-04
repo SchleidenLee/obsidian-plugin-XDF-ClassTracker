@@ -14,10 +14,10 @@ https://github.com/ozntel/oz-calendar
 const prod = process.argv[2] === 'production';
 
 const copyStaticFiles = () => {
-	fs.mkdirSync('build', { recursive: true });
-	fs.copyFileSync('manifest.json', path.join('build', 'manifest.json'));
-	fs.copyFileSync('styles.css', path.join('build', 'styles.css'));
-	console.log('Copied manifest.json and styles.css to build/');
+	fs.mkdirSync('dist', { recursive: true });
+	fs.copyFileSync('manifest.json', path.join('dist', 'manifest.json'));
+	fs.copyFileSync('styles.css', path.join('dist', 'styles.css'));
+	console.log('Copied manifest.json and styles.css to dist/');
 };
 
 const context = await esbuild.context({
@@ -47,7 +47,7 @@ const context = await esbuild.context({
 	logLevel: 'info',
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
-	outfile: 'build/main.js',
+	outfile: 'dist/main.js',
 });
 
 if (prod) {

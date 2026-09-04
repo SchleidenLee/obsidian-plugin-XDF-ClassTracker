@@ -1,55 +1,28 @@
-# PENDING - 反馈 Checkbox 功能
+# PENDING - feedback_cache.json 磁盘缓存
 
 ## 功能目标
-读取笔记 frontmatter 中的 `need_send_feedback` 字段，若为 `true`，则读取正文中「提交反馈」checkbox 的状态，并显示在日历的笔记栏中。
+引入磁盘缓存替代当前每次刷新都读取正文的方式，提升课节笔记数量增长后的性能。
 
 ## 核心设计
 
-### 1. 缓存机制
-- **缓存文件**: 插件目录下的 `feedback_cache.json`
+### 缓存文件
+- **路径**: 插件目录下的 `feedback_cache.json`
 - **格式**:
   ```json
   {
     "path/to/note.md": {
       "need_send_feedback": true,
-      "feedback_submitted": false,
+      "feedbackTaskDone": false,
       "last_updated": "2026-07-08T10:00:00+08:00"
     }
   }
   ```
 - **初始构建**: 遍历所有 md 文件 → 过滤 `need_send_feedback: true` → 读取正文提取 checkbox 状态 → 写入缓存（首次略耗时）
-- **增量更新**: 监听文件变更，只处理变更的文件
+- **增量更新**: 监听 `metadataCache.on('changed')` 事件，只处理变更的文件
 
-### 2. 监听机制
-- **事件**: `metadataCache.on('changed')` - 已验证会在 checkbox 状态变化时触发
-- **原理**: Obsidian 的 `CachedMetadata.listItems` 包含 `task` 属性，checkbox 变化会重新解析并触发事件
-- **增量**: 回调参数包含被修改的 `file`，不需要全量扫描
-
-### 3. 双向同步
-- **文件 → 插件**: 监听 `changed` 事件 → 更新 `feedback_cache.json`
-- **插件 → 文件**: 点击插件 checkbox → `vault.read()` → 正则替换 → `vault.modify()` 写回文件
-- **循环防护**: 需要添加标志位避免 `vault.modify()` 触发的循环更新
-
-### 4. UI 渲染
-- **位置**: `noteList.tsx` 中的笔记条目
-- **显示逻辑**:
-  - `need_send_feedback: false` → 不显示
-  - `true` + 未提交 → 显示 `☐`
-  - `true` + 已提交 → 显示 `☑`
-- **交互**: 点击可切换状态并写回文件
+### 触发条件
+当前课节笔记数量较少（每天 1-6 篇），全量扫描性能无瓶颈。**待笔记数量明显增长（如 500+ 篇）且切换日期出现卡顿后再启用。**
 
 ## 涉及文件
-- `types.ts` - 添加 `feedbackSubmitted`、`needSendFeedback` 字段到 `OZItem`
-- `main.ts` - 添加缓存读写、监听逻辑、checkbox 提取/写回函数
-- `noteList.tsx` - 渲染 checkbox 图标、添加点击处理
-- `view.tsx` - 可能需要传递 plugin 引用
-
-## 实现顺序
-1. 类型定义更新
-2. 缓存读写逻辑（`loadFeedbackCache` / `saveFeedbackCache`）
-3. 正文 checkbox 提取函数
-4. 初始缓存构建
-5. 文件变更监听处理
-6. 笔记列表渲染 checkbox
-7. 点击写回文件逻辑
-8. 循环触发防护
+- `main.ts` — 添加 `loadFeedbackCache` / `saveFeedbackCache`、修改 `extractFeedbackInfo` 优先读缓存
+- `PENDING` — 本文档

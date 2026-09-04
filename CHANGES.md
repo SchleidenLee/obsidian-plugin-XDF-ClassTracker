@@ -195,7 +195,17 @@
 3. **新建笔记弹窗仍为英文**（`modal.ts` 的 "Create Note"、"Cancel" 等文案未中文化）
 4. **排班编辑器 weekday 为英文**（Sun/Mon/... 应改为中文）
 
-## 七、v1.0.2 功能精简
+## 七、v1.0.3 反馈与 UI 精修
+
+| 改动项 | 说明 | 涉及文件 |
+|--------|------|----------|
+| 新增逾期（Overdue）逻辑 | 课程日次日 24:00 后未提交即判为逾期，格子与指示点标红 | `calendar.tsx`, `noteList.tsx` |
+| 逾期颜色可配置 | 设置面板新增逾期颜色选项，支持 10 种红色预设 | `settings.ts` |
+| 底部状态栏重构 | 新增 Total/Pending/Overdue 统计，移除底部导航栏 | `noteList.tsx`, `styles.css` |
+| 格子布局修复 | 色块改为 Flex 列布局强制沉底，解决颜色块错位问题 | `styles.css` |
+| 彻底删除新建功能 | 移除 `modal.ts`、新建命令、右键菜单及相关设置项 | `main.ts`, `settings.ts`, `modal.ts` |
+
+## 八、v1.0.2 功能精简
 
 | 改动项 | 说明 | 涉及文件 |
 |--------|------|----------|
@@ -213,7 +223,7 @@
 | 修复 `reloadPlugin` | 硬编码插件名 `'oz-calendar'` → `this.manifest.id` | `main.ts` |
 | 输出目录改为 `dist/` | 统一项目构建规范 | `esbuild.config.mjs`, `.gitignore` |
 
-## 八、diff 参考
+## 九、diff 参考
 
 以下命令可在本地快速查看代码差异：
 

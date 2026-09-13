@@ -13,12 +13,13 @@ interface NoteListComponentParams {
 	selectedDay: Date;
 	setSelectedDay: (selectedDay: Date) => void;
 	setActiveStartDate: (newActiveStartDate: Date) => void;
+	activeStartDate: Date;
 	plugin: OZCalendarPlugin;
 	forceValue: number;
 }
 
 export default function NoteListComponent(params: NoteListComponentParams) {
-	const { setSelectedDay, selectedDay, plugin, setActiveStartDate, forceValue } = params;
+	const { setSelectedDay, selectedDay, activeStartDate, plugin, setActiveStartDate, forceValue } = params;
 
 	const openFilePath = (e: React.MouseEvent<HTMLDivElement, MouseEvent>, filePath: string) => {
 		let abstractFile = plugin.app.vault.getAbstractFileByPath(filePath);
@@ -53,7 +54,7 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 	// Statistics
 	const stats = useMemo(() => {
 		const today = dayjs().startOf('day');
-		const currentMonth = today.format('YYYY-MM');
+		const viewMonth = dayjs(activeStartDate).format('YYYY-MM');
 		let monthlyTotal = 0;
 		let pendingToday = 0;
 		let overdue = 0;
@@ -62,8 +63,8 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 			const items = plugin.OZCALENDARDAYS_STATE[dateKey].filter((item) => item.type === 'note');
 			const noteDate = dayjs(dateKey);
 
-			// Monthly total
-			if (dateKey.startsWith(currentMonth)) {
+			// Monthly total (跟随日历当前展示月份)
+			if (dateKey.startsWith(viewMonth)) {
 				monthlyTotal += items.length;
 			}
 
@@ -82,7 +83,7 @@ export default function NoteListComponent(params: NoteListComponentParams) {
 			});
 		}
 		return { monthlyTotal, pendingToday, overdue };
-	}, [plugin.OZCALENDARDAYS_STATE, forceValue]);
+	}, [plugin.OZCALENDARDAYS_STATE, activeStartDate, forceValue]);
 
 	const triggerFileContextMenu = (e: React.MouseEvent | React.TouchEvent, filePath: string) => {
 		let abstractFile = plugin.app.vault.getAbstractFileByPath(filePath);

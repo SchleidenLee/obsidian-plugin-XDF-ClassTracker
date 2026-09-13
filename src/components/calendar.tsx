@@ -154,6 +154,7 @@ export default function MyCalendar(params: { plugin: OZCalendarPlugin }) {
 				selectedDay={selectedDay}
 				setSelectedDay={setSelectedDay}
 				setActiveStartDate={setActiveStartDate}
+				activeStartDate={activeStartDate}
 				plugin={plugin}
 				forceValue={forceValue}
 			/>

@@ -5,6 +5,11 @@
 
 ---
 
+## 2026-10-17 · tag 规范化：`1.0.4` → `v1.0.4`
+
+- 删除裸 tag `1.0.4` 及其 Release（原手写说明已迁至新 Release），改为在 HEAD 重打 `v1.0.4` 并推送，由统一流水线重新构建发布。
+- **为什么**：`v*` 是流水线的唯一触发条件，裸 tag 不触发；`1.0.4` 是旧 `tag-version-prefix: ""` 时代的遗留产物，Latest 长期挂在不符合规范的 tag 上。更早的裸 tag（`1.0.0`~`1.0.3`）属历史版本，未翻改。
+
 ## 2026-10-16 · 统一发布流水线
 
 - 新增 `.github/workflows/release.yml`：推送 `v*` tag 触发，校验 `package.json` / `manifest.json` / tag 三者版本一致后构建并发布，release notes 自动生成；移除旧的 `tag-version-prefix` 配置。

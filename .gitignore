@@ -25,3 +25,16 @@ package-lock.json
 
 # Reference repos (do not commit)
 references/
+
+# 只用 pnpm，忽略其它包管理器的锁文件
+yarn.lock
+bun.lock
+
+# 本地垃圾
+*.log
+*.tmp
+*.bak
+*.db
+*.sqlite
+tmp/
+out/

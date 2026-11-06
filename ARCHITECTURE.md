@@ -73,15 +73,15 @@ OZCalendarView (view.tsx) → MyCalendar (calendar.tsx) + NoteList (noteList.tsx
 
 ## 5. 构建与发布
 
-- 构建：`npm run build` = `tsc -noEmit -skipLibCheck` + `esbuild` → `dist/`（`main.js` / `manifest.json` / `styles.css`）。
-- 开发：`npm run dev`（esbuild watch，输出到本地 Vault 插件目录）。
+- 构建：`pnpm run build`（`package.json` 脚本名仍是 `build`）= `tsc -noEmit -skipLibCheck` + `esbuild` → `dist/`（`main.js` / `manifest.json` / `styles.css`）。仓库有 `pnpm-lock.yaml`，没有 npm lockfile，也没有 `packageManager` 字段。
+- 开发：`pnpm run dev`（esbuild watch，输出到本地 Vault 插件目录）。
 - 发布：`.github/workflows/release.yml` 由 tag `v*` 触发，校验 `package.json` / `manifest.json` / tag 三者版本一致后构建发布，release notes 自动生成。
 - 版本号三处需一致：`package.json` / `manifest.json` / release tag。
 
 ## 6. 约定
 
 - React 组件统一放在 `src/components/`，通过 `view.tsx` 挂载；state 变更后靠 `forceUpdate` 触发重渲染。
-- 所有对 Vault 的写操作仅限右键「为这天创建笔记」；插件不修改既有笔记正文（反馈状态只读不写回，见 PENDING 技术债）。
+- 插件不创建课节笔记，也不修改既有笔记正文（反馈状态只读不写回，见 PENDING 技术债）。v1.0.3 已删除新建入口；`createNewMarkdownFile` 仍留在 `utils.ts` 且无引用。
 - 排班等插件私有数据一律写插件目录 JSON，不污染 Vault 笔记。
 
 ## 7. 已知技术债（详见 PENDING）
